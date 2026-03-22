@@ -7,6 +7,7 @@ package-lock.json
 # ── Environment / Secrets ─────────────────────────────────────────────────────
 # NEVER commit .env — it contains real API keys and secrets
 .env
+env.
 Backend/.env
 *.env
 *.env.local

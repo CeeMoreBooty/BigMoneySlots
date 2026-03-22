@@ -5,7 +5,7 @@ const transactionSchema = new mongoose.Schema({
     type:        {
         type: String,
         enum: ['iap_purchase', 'spin_win', 'spin_bet', 'reward_hourly', 'reward_daily',
-               'new_player_pack', 'tournament_prize', 'admin_grant'],
+               'new_player_pack', 'tournament_prize', 'admin_grant', 'invite_reward'],
         required: true
     },
     amount:      { type: Number, required: true }, // positive = credit, negative = debit
