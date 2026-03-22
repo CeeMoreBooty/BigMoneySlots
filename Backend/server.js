@@ -17,6 +17,7 @@ const chatRoutes           = require('./routes/chat');
 const friendsRoutes        = require('./routes/friends');
 const accountLinkingRoutes = require('./routes/accountLinking');
 const securityRoutes       = require('./routes/security');
+const inviteRoutes         = require('./routes/invite');
 
 // ── Services ──────────────────────────────────────────────────────────────────
 const tournamentScheduler  = require('./services/tournamentScheduler');
@@ -57,6 +58,7 @@ app.use('/api/chat',        chatRoutes);
 app.use('/api/friends',     friendsRoutes);
 app.use('/api/account',     accountLinkingRoutes);
 app.use('/api/security',    securityRoutes);
+app.use('/api/invite',      inviteRoutes);
 
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
