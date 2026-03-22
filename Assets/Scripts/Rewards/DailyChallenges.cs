@@ -35,6 +35,24 @@ public class DailyChallenges : MonoBehaviour
         public int           gemReward;
     }
 
+    private class ChallengeTemplate
+    {
+        public readonly ChallengeType Type;
+        public readonly string Description;
+        public readonly long Target;
+        public readonly long Coins;
+        public readonly int Gems;
+
+        public ChallengeTemplate(ChallengeType type, string description, long target, long coins, int gems)
+        {
+            Type = type;
+            Description = description;
+            Target = target;
+            Coins = coins;
+            Gems = gems;
+        }
+    }
+
     public List<Challenge> TodayChallenges { get; private set; } = new List<Challenge>();
 
     public static event Action              OnChallengesRefreshed;
@@ -146,20 +164,20 @@ public class DailyChallenges : MonoBehaviour
         TodayChallenges.Clear();
         PlayerPrefs.SetString("dc_games_today", "");
 
-        var pool = new List<(ChallengeType type, string desc, long target, long coins, int gems)>
+        var pool = new List<ChallengeTemplate>
         {
-            (ChallengeType.SpinCount,          "Spin 50 times today",               50,   100_000_000L,  5),
-            (ChallengeType.SpinCount,          "Spin 150 times today",             150,   350_000_000L, 15),
-            (ChallengeType.SpinCount,          "Spin 300 times today",             300,   800_000_000L, 30),
-            (ChallengeType.BigWinMultiplier,   "Land a 10× win",                    1,    200_000_000L, 10),
-            (ChallengeType.BigWinMultiplier,   "Land 3 wins of 10× or more",        3,    600_000_000L, 25),
-            (ChallengeType.UseFreeSpin,        "Use 10 free spins",                10,   150_000_000L,  8),
-            (ChallengeType.UseFreeSpin,        "Use 30 free spins",                30,   400_000_000L, 20),
-            (ChallengeType.PlayTournament,     "Enter a tournament",                1,    250_000_000L, 12),
-            (ChallengeType.WinCoins,           "Win 1B coins total today",  1_000_000_000, 300_000_000L, 15),
-            (ChallengeType.WinCoins,           "Win 5B coins total today",  5_000_000_000L, 1_000_000_000L, 50),
-            (ChallengeType.PlayMultipleGames,  "Play 3 different slot games",       3,    500_000_000L, 20),
-            (ChallengeType.PlayMultipleGames,  "Play 5 different slot games",       5,    1_200_000_000L, 40),
+            new ChallengeTemplate(ChallengeType.SpinCount,         "Spin 50 times today",              50,            100_000_000L,   5),
+            new ChallengeTemplate(ChallengeType.SpinCount,         "Spin 150 times today",             150,           350_000_000L,  15),
+            new ChallengeTemplate(ChallengeType.SpinCount,         "Spin 300 times today",             300,           800_000_000L,  30),
+            new ChallengeTemplate(ChallengeType.BigWinMultiplier,  "Land a 10× win",                   1,             200_000_000L,  10),
+            new ChallengeTemplate(ChallengeType.BigWinMultiplier,  "Land 3 wins of 10× or more",       3,             600_000_000L,  25),
+            new ChallengeTemplate(ChallengeType.UseFreeSpin,       "Use 10 free spins",                10,            150_000_000L,   8),
+            new ChallengeTemplate(ChallengeType.UseFreeSpin,       "Use 30 free spins",                30,            400_000_000L,  20),
+            new ChallengeTemplate(ChallengeType.PlayTournament,    "Enter a tournament",               1,             250_000_000L,  12),
+            new ChallengeTemplate(ChallengeType.WinCoins,          "Win 1B coins total today",         1_000_000_000, 300_000_000L,  15),
+            new ChallengeTemplate(ChallengeType.WinCoins,          "Win 5B coins total today",         5_000_000_000L, 1_000_000_000L, 50),
+            new ChallengeTemplate(ChallengeType.PlayMultipleGames, "Play 3 different slot games",      3,             500_000_000L,  20),
+            new ChallengeTemplate(ChallengeType.PlayMultipleGames, "Play 5 different slot games",      5,             1_200_000_000L, 40),
         };
 
         // Pick 3 non-duplicate type challenges
@@ -169,9 +187,9 @@ public class DailyChallenges : MonoBehaviour
         {
             int idx = rng.Next(pool.Count);
             if (chosen.Contains(idx)) continue;
-            if (usedTypes.Contains(pool[idx].type)) continue;
+            if (usedTypes.Contains(pool[idx].Type)) continue;
             chosen.Add(idx);
-            usedTypes.Add(pool[idx].type);
+            usedTypes.Add(pool[idx].Type);
         }
 
         for (int i = 0; i < chosen.Count; i++)
@@ -180,11 +198,11 @@ public class DailyChallenges : MonoBehaviour
             TodayChallenges.Add(new Challenge
             {
                 id          = $"dc_{dateKey}_{i}",
-                type        = p.type,
-                description = p.desc,
-                target      = p.target,
-                coinReward  = p.coins,
-                gemReward   = p.gems,
+                type        = p.Type,
+                description = p.Description,
+                target      = p.Target,
+                coinReward  = p.Coins,
+                gemReward   = p.Gems,
             });
         }
 
