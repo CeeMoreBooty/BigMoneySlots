@@ -18,6 +18,7 @@
 
 const SecurityEvent   = require('../models/SecurityEvent');
 const BannedEntity    = require('../models/BannedEntity');
+const webhook         = require('./webhookService');
 
 // ── Configurable thresholds (can be moved to .env) ───────────────────────────
 const CFG = {
@@ -178,6 +179,16 @@ async function logEvent(opts) {
         }
 
         console.warn(`[Security][${severity.toUpperCase()}] ${eventType} — IP: ${ip} Player: ${playerId} Path: ${path}${autoBanned ? ' → AUTO-BANNED' : ''}`);
+
+        // Forward to company webhook (fire-and-forget)
+        webhook.send('security_event', {
+            eventId:    event?._id,
+            eventType, severity, autoBanned,
+            ip, playerId, deviceId,
+            path, method, userAgent,
+            evidence, note,
+        }, severity);
+
         return event;
     } catch (err) {
         // Never crash the main request because of a security logging error
@@ -193,6 +204,10 @@ async function _autoBan({ ip, playerId, deviceId, reason, io }) {
     if (deviceId) ops.push(_ban('device', deviceId,     reason));
     await Promise.all(ops);
     if (io) io.to('admin_room').emit('player_banned', { ip, playerId, deviceId, reason, time: new Date().toISOString() });
+
+    // Forward ban notification to company webhook
+    webhook.send('ban_issued', { ip, playerId, deviceId, reason, bannedBy: 'system' }, 'high');
+
     return true;
 }
 
@@ -369,6 +384,7 @@ async function checkCoinDelta(ip, playerId, claimedWin, io) {
  */
 async function manualBan(type, value, reason, expiresAt = null) {
     await _ban(type, value, reason, expiresAt);
+    webhook.send('ban_issued', { type, value, reason, expiresAt, bannedBy: 'admin' }, 'high');
 }
 
 /**

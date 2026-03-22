@@ -12,6 +12,7 @@ const express        = require('express');
 const SecurityEvent  = require('../models/SecurityEvent');
 const BannedEntity   = require('../models/BannedEntity');
 const security       = require('../services/securityService');
+const webhook        = require('../services/webhookService');
 const router         = express.Router();
 
 // ── Admin auth guard ──────────────────────────────────────────────────────────
@@ -125,6 +126,27 @@ router.patch('/events/:id/resolve', async (req, res) => {
         );
         if (!event) return res.status(404).json({ error: 'Event not found' });
         res.json({ success: true, event });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── GET /api/security/webhook/status ─────────────────────────────────────────
+// Returns the current webhook configuration (URL is partially masked).
+router.get('/webhook/status', (_req, res) => {
+    res.json(webhook.status());
+});
+
+// ── POST /api/security/webhook/test ──────────────────────────────────────────
+// Sends a test ping to the configured webhook URL to verify connectivity.
+router.post('/webhook/test', async (_req, res) => {
+    try {
+        const result = await webhook.test();
+        if (result.ok) {
+            res.json({ success: true, statusCode: result.statusCode });
+        } else {
+            res.status(502).json({ success: false, error: result.error });
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

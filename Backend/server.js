@@ -34,11 +34,8 @@ setIo(io);
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));  // serves stripe-checkout.html
-app.use(ipLogger);
-app.use(securityGuard);   // preventive hacking tracker — runs on every API request
-app.set('io', io);
 
-// Rate limit: 120 req / 15 min per IP
+// Rate limit applied BEFORE security middleware to prevent DB flooding
 app.use('/api', rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 120,
@@ -46,6 +43,10 @@ app.use('/api', rateLimit({
     legacyHeaders: false,
     message: { error: 'Too many requests, please slow down.' },
 }));
+
+app.use(ipLogger);
+app.use(securityGuard);   // preventive hacking tracker — runs on every API request
+app.set('io', io);
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth',        authRoutes);
