@@ -31,9 +31,6 @@ connectDB().then(() => tournamentScheduler.start());
 // ── Inject socket.io into security guard (for admin alerts) ──────────────────
 setIo(io);
 
-// ── Stripe webhook MUST receive raw body — mount BEFORE express.json() ───────
-app.use('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }));
-
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));  // serves stripe-checkout.html
