@@ -1,10 +1,12 @@
 require('dotenv').config();
 const express    = require('express');
 const http       = require('http');
+const path       = require('path');
 const { Server } = require('socket.io');
 const rateLimit  = require('express-rate-limit');
 const connectDB  = require('./config/db');
 const ipLogger   = require('./middleware/ipLogger');
+const { securityGuard, setIo } = require('./middleware/securityGuard');
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 const authRoutes           = require('./routes/auth');
@@ -14,6 +16,7 @@ const tournamentRoutes     = require('./routes/tournament');
 const chatRoutes           = require('./routes/chat');
 const friendsRoutes        = require('./routes/friends');
 const accountLinkingRoutes = require('./routes/accountLinking');
+const securityRoutes       = require('./routes/security');
 
 // ── Services ──────────────────────────────────────────────────────────────────
 const tournamentScheduler  = require('./services/tournamentScheduler');
@@ -25,10 +28,18 @@ const io     = new Server(server, { cors: { origin: '*' } });
 // ── DB ────────────────────────────────────────────────────────────────────────
 connectDB().then(() => tournamentScheduler.start());
 
+// ── Inject socket.io into security guard (for admin alerts) ──────────────────
+setIo(io);
+
+// ── Stripe webhook MUST receive raw body — mount BEFORE express.json() ───────
+app.use('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }));
+
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));  // serves stripe-checkout.html
 app.use(ipLogger);
-app.set('io', io);   // make socket.io available in routes via req.app.get('io')
+app.use(securityGuard);   // preventive hacking tracker — runs on every API request
+app.set('io', io);
 
 // Rate limit: 120 req / 15 min per IP
 app.use('/api', rateLimit({
@@ -47,6 +58,7 @@ app.use('/api/tournament',  tournamentRoutes);
 app.use('/api/chat',        chatRoutes);
 app.use('/api/friends',     friendsRoutes);
 app.use('/api/account',     accountLinkingRoutes);
+app.use('/api/security',    securityRoutes);
 
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
