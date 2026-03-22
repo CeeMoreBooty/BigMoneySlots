@@ -9,7 +9,6 @@ public class SlotMachine : MonoBehaviour
     [Header("Config")]
     public PayoutTable payoutTable;
     public long betAmount = 100;
-    [Range(0f, 1f)] public float jackpotChance = 0.001f;
 
     public event Action<long, bool> OnSpinComplete; // (payout, isJackpot)
 
@@ -21,20 +20,22 @@ public class SlotMachine : MonoBehaviour
             return;
         }
 
-        ProgressiveJackpot.Instance?.Contribute(betAmount);
-
+        // Spin reels
         Symbol[] results = new Symbol[reels.Length];
         for (int i = 0; i < reels.Length; i++)
             results[i] = reels[i].Spin();
 
-        // Check jackpot
-        if (UnityEngine.Random.value <= jackpotChance)
+        // Evaluate 5-tier jackpot (also contributes bet to all pools internally)
+        var (winTier, jackpotPrize) = ProgressiveJackpot.Instance != null
+            ? ProgressiveJackpot.Instance.EvaluateSpin(betAmount)
+            : ((ProgressiveJackpot.JackpotTier?)null, 0L);
+
+        if (winTier.HasValue && jackpotPrize > 0)
         {
-            long jackpotAmount = ProgressiveJackpot.Instance?.Payout() ?? 0;
-            jackpotAmount = LoyaltySystem.Instance?.ApplyTierBonus(jackpotAmount) ?? jackpotAmount;
-            PlayerEconomy.Instance.AddCoins(jackpotAmount);
+            jackpotPrize = LoyaltySystem.Instance?.ApplyTierBonus(jackpotPrize) ?? jackpotPrize;
+            PlayerEconomy.Instance.AddCoins(jackpotPrize);
             LoyaltySystem.Instance?.RegisterSpin();
-            OnSpinComplete?.Invoke(jackpotAmount, true);
+            OnSpinComplete?.Invoke(jackpotPrize, true);
             return;
         }
 
