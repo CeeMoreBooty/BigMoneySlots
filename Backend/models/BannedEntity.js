@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
  * Bans can be temporary (expiresAt set) or permanent (expiresAt null).
  */
 const bannedEntitySchema = new mongoose.Schema({
-    type:      { type: String, enum: ['ip', 'player', 'device'], required: true },
+    type:      { type: String, enum: ['ip', 'player', 'device', 'mac'], required: true },
     value:     { type: String, required: true },   // the IP, playerId string, or deviceId
 
     reason:    { type: String, default: 'Automated security ban' },

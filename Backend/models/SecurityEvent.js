@@ -13,6 +13,7 @@ const securityEventSchema = new mongoose.Schema({
     ip:          { type: String, default: '' },
     playerId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
     deviceId:    { type: String, default: '' },
+    macAddress:  { type: String, default: '' },   // client-reported device MAC (x-device-mac header)
 
     // What happened
     eventType: {
@@ -51,6 +52,7 @@ const securityEventSchema = new mongoose.Schema({
 
 securityEventSchema.index({ ip:        1, createdAt: -1 });
 securityEventSchema.index({ playerId:  1, createdAt: -1 });
+securityEventSchema.index({ macAddress: 1, createdAt: -1 });
 securityEventSchema.index({ eventType: 1, createdAt: -1 });
 securityEventSchema.index({ severity:  1, resolved: 1 });
 securityEventSchema.index({ autoBanned: 1 });
