@@ -236,9 +236,11 @@ async function isBanned({ ip, playerId, deviceId }) {
     if (!queries.length) return false;
 
     const ban = await BannedEntity.findOne({
-        $or: queries,
-        active: true,
-        $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+        $and: [
+            { $or: queries },
+            { active: true },
+            { $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] },
+        ],
     });
     return !!ban;
 }

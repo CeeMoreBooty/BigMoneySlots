@@ -97,6 +97,9 @@ public class ProgressiveJackpot : MonoBehaviour
     public long  GetPool(JackpotTier tier)  => tiers[(int)tier].currentPool;
     public float GetChance(JackpotTier tier) => DynamicChance(tiers[(int)tier]);
 
+    /// <summary>Convenience property returning the Mega (top-tier) jackpot pool for simple UI display.</summary>
+    public long CurrentJackpot => GetPool(JackpotTier.Mega);
+
     // ── Persistence ──────────────────────────────────────────────────────────
     private void SavePools()
     {

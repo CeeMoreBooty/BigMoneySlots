@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema({
         required: true
     },
     amount:      { type: Number, required: true }, // positive = credit, negative = debit
-    currency:    { type: String, enum: ['coins', 'freeSpins', 'superSpins', 'ultraSpins'], default: 'coins' },
+    currency:    { type: String, enum: ['coins', 'gems', 'freeSpins', 'superSpins', 'ultraSpins'], default: 'coins' },
     description: { type: String, default: '' },
     // IAP-specific
     productId:       { type: String, default: null },

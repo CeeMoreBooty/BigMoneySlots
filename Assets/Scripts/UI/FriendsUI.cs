@@ -104,7 +104,57 @@ public class FriendsUI : MonoBehaviour
         string query = searchInput?.text?.Trim();
         if (string.IsNullOrEmpty(query)) return;
         SetFeedback($"Searching for \"{query}\"…");
-        // TODO: call backend GET /api/friends/search?q=query and populate searchResultsParent
+        StartCoroutine(SearchPlayers(query));
+    }
+
+    private System.Collections.IEnumerator SearchPlayers(string query)
+    {
+        string url = $"{BackendClient.BaseUrl}/api/friends/search?q={UnityEngine.Networking.UnityWebRequest.EscapeURL(query)}";
+        using var req = UnityEngine.Networking.UnityWebRequest.Get(url);
+        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        yield return req.SendWebRequest();
+
+        if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+        {
+            var wrapper = JsonUtility.FromJson<SearchWrapper>(req.downloadHandler.text);
+            if (searchResultsParent != null)
+            {
+                foreach (Transform child in searchResultsParent) Destroy(child.gameObject);
+                foreach (var p in wrapper.results)
+                {
+                    if (friendRowPrefab == null) break;
+                    var row       = Instantiate(friendRowPrefab, searchResultsParent);
+                    var nameText  = row.transform.Find("NameText")?.GetComponent<TMP_Text>();
+                    var addBtn    = row.transform.Find("AcceptButton")?.GetComponent<Button>();
+                    if (nameText != null) nameText.text = p.displayName;
+                    string id = p.playerId;
+                    addBtn?.gameObject.SetActive(true);
+                    addBtn?.onClick.AddListener(() =>
+                    {
+                        FriendsManager.Instance?.SendFriendRequest(id);
+                        SetFeedback($"Friend request sent to {p.displayName}!");
+                    });
+                }
+            }
+            SetFeedback(wrapper.results.Count == 0 ? "No players found." : $"Found {wrapper.results.Count} player(s).");
+        }
+        else
+        {
+            SetFeedback("Search failed. Please try again.");
+        }
+    }
+
+    [System.Serializable]
+    private class SearchWrapper
+    {
+        public List<SearchResult> results;
+    }
+
+    [System.Serializable]
+    private class SearchResult
+    {
+        public string playerId;
+        public string displayName;
     }
 
     private void SetFeedback(string msg)

@@ -8,6 +8,7 @@ const playerSchema = new mongoose.Schema({
 
     // Coin ledger (authoritative server-side balance)
     coins:        { type: Number, default: 0, min: 0 },
+    gems:         { type: Number, default: 0, min: 0 },
     freeSpins:    { type: Number, default: 0, min: 0 },
     superSpins:   { type: Number, default: 0, min: 0 },
     ultraSpins:   { type: Number, default: 0, min: 0 },
