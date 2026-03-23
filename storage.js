@@ -64,4 +64,14 @@ async function getAllPlayers() {
   return readAll();
 }
 
-module.exports = { getPlayer, setPlayer, updatePlayer, deletePlayer, getAllPlayers };
+// Upsert-merge: create the player if they don't exist, or merge the patch into
+// their existing record if they do.  This is the "push" operation — safe to
+// call whether or not the player has been seen before.
+async function pushPlayer(id, patch) {
+  const all = await readAll();
+  all[id] = { ...(all[id] || {}), ...patch, updatedAt: new Date().toISOString() };
+  await writeAll(all);
+  return all[id];
+}
+
+module.exports = { getPlayer, setPlayer, updatePlayer, deletePlayer, getAllPlayers, pushPlayer };

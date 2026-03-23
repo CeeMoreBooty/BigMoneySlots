@@ -98,6 +98,19 @@ async function runTests() {
   const notFound = await request('GET', '/unknown-route');
   assert(notFound.status === 404, 'Unknown route returns 404');
 
+  // Push (upsert-merge) — new player
+  const pushed1 = await request('PUT', '/players/player2', { coins: 200, level: 3 });
+  assert(pushed1.status === 200, 'PUT /players/player2 (new) returns 200');
+  assert(pushed1.body.coins === 200, 'Pushed new player has correct coins');
+  assert(pushed1.body.level === 3, 'Pushed new player has correct level');
+  assert(typeof pushed1.body.updatedAt === 'string', 'Pushed player has updatedAt timestamp');
+
+  // Push (upsert-merge) — existing player, partial update
+  const pushed2 = await request('PUT', '/players/player2', { coins: 9999 });
+  assert(pushed2.status === 200, 'PUT /players/player2 (existing) returns 200');
+  assert(pushed2.body.coins === 9999, 'Push-merged player has updated coins');
+  assert(pushed2.body.level === 3, 'Push-merged player retains existing level');
+
   server.close();
   console.log('\nAll tests passed.\n');
 }

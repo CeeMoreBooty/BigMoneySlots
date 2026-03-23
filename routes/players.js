@@ -42,6 +42,17 @@ router.patch('/:id', async (req, res) => {
   res.json(player);
 });
 
+// PUT /players/:id — push (upsert-merge): creates the player if missing,
+// otherwise merges the supplied fields into the existing record.
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!req.body || typeof req.body !== 'object') {
+    return res.status(400).json({ error: 'Request body must be a JSON object' });
+  }
+  const player = await storage.pushPlayer(id, req.body);
+  res.json(player);
+});
+
 // DELETE /players/:id — delete a player record
 router.delete('/:id', async (req, res) => {
   const deleted = await storage.deletePlayer(req.params.id);

@@ -88,6 +88,19 @@ Merges the provided fields into the existing record. Returns `404` if the player
 
 ---
 
+### Push (upsert-merge) a player
+
+```
+PUT /players/:id
+Content-Type: application/json
+
+{ "coins": 9999 }
+```
+
+Creates the player record if it does not exist, or merges the supplied fields into the existing record if it does. Unspecified fields are preserved. Returns `200` with the saved record.
+
+---
+
 ### Delete a player
 
 ```
