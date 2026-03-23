@@ -18,6 +18,8 @@ public class PlayerEconomy : MonoBehaviour
     public float WinMultiplier { get; private set; } = 1f;
     private double _boostExpiryTime;
 
+    private const long   StartingCoins   = 10_000;
+
     private const string KeyCoins       = "eco_coins";
     private const string KeyFreeSpins   = "eco_free_spins";
     private const string KeySuperSpins  = "eco_super_spins";
@@ -80,7 +82,9 @@ public class PlayerEconomy : MonoBehaviour
 
     private void Load()
     {
+        bool firstRun = !PlayerPrefs.HasKey(KeyCoins);
         Coins        = long.TryParse(PlayerPrefs.GetString(KeyCoins, "0"), out long c) ? c : 0;
+        if (firstRun) { Coins = StartingCoins; Save(); }
         FreeSpins    = PlayerPrefs.GetInt(KeyFreeSpins, 0);
         SuperSpins   = PlayerPrefs.GetInt(KeySuperSpins, 0);
         UltraSpins   = PlayerPrefs.GetInt(KeyUltraSpins, 0);
