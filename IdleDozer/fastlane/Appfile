@@ -1,0 +1,10 @@
+# Fastlane Appfile
+# https://docs.fastlane.tools/advanced/Appfile/
+
+# Your app's package name (must match applicationId in app/build.gradle)
+package_name("com.ceemoorebooty.idledozer")
+
+# Path to your Google Play JSON key file.
+# Generate it in Google Play Console → Setup → API access → Service accounts.
+# See: https://docs.fastlane.tools/getting-started/android/setup/
+json_key_file(ENV["PLAY_STORE_JSON_KEY"] || "fastlane/play-store-key.json")
