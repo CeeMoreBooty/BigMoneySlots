@@ -73,10 +73,13 @@ public class ChatManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(text)) return;
         text = SanitizeText(text);
 
+        string rawName   = PlayerPrefs.GetString("player_name", "Guardian");
+        string clampedName = rawName.Length > 24 ? rawName.Substring(0, 24) : rawName;
+
         var msg = new ChatMessage
         {
             senderId   = PlayerPrefs.GetString("player_id", "local"),
-            senderName = PlayerPrefs.GetString("player_name", "Guardian"),
+            senderName = clampedName,
             text       = text,
             channel    = channel.ToString().ToLower(),
             roomId     = roomId,
@@ -98,7 +101,16 @@ public class ChatManager : MonoBehaviour
     // ── Called by socket.io callback when a message arrives from server ───────
     public void OnSocketMessageReceived(string json)
     {
-        var msg = JsonUtility.FromJson<ChatMessage>(json);
+        ChatMessage msg;
+        try
+        {
+            msg = JsonUtility.FromJson<ChatMessage>(json);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[ChatManager] Failed to parse socket message: {ex.Message}");
+            return;
+        }
         if (msg == null) return;
         ChatChannel channel = msg.channel switch
         {
@@ -116,6 +128,7 @@ public class ChatManager : MonoBehaviour
         string url  = $"{BackendClient.BaseUrl}/api/chat/send";
         string body = JsonUtility.ToJson(msg);
         using var req = new UnityWebRequest(url, "POST");
+        req.timeout         = 10;
         req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type", "application/json");
@@ -129,6 +142,7 @@ public class ChatManager : MonoBehaviour
     {
         string url = $"{BackendClient.BaseUrl}/api/chat/history?channel={channel.ToString().ToLower()}&limit=50";
         using var req = UnityWebRequest.Get(url);
+        req.timeout = 10;
         req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
         yield return req.SendWebRequest();
         if (req.result == UnityWebRequest.Result.Success)
@@ -150,7 +164,7 @@ public class ChatManager : MonoBehaviour
     private static string SanitizeText(string text)
     {
         // Strip HTML tags and trim; profanity filter can be added here
-        text = System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", "");
-        return text.Trim().Substring(0, Math.Min(text.Trim().Length, 200));
+        text = System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", "").Trim();
+        return text.Substring(0, Math.Min(text.Length, 200));
     }
 }

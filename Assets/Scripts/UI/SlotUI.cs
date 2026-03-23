@@ -20,6 +20,10 @@ public class SlotUI : MonoBehaviour
     [Header("References")]
     public SlotMachine slotMachine;
 
+    private long   _lastCoins     = long.MinValue;
+    private long   _lastBet       = long.MinValue;
+    private long   _lastJackpot   = long.MinValue;
+
     private void Awake()
     {
         spinButton?.onClick.AddListener(OnSpinClicked);
@@ -61,15 +65,36 @@ public class SlotUI : MonoBehaviour
     {
         if (PlayerEconomy.Instance != null)
         {
-            if (balanceText != null)
-                balanceText.text = $"💰 {FormatCoins(PlayerEconomy.Instance.Coins)}";
+            long coins = PlayerEconomy.Instance.Coins;
+            if (coins != _lastCoins)
+            {
+                _lastCoins = coins;
+                if (balanceText != null)
+                    balanceText.text = $"💰 {FormatCoins(coins)}";
+            }
 
-            if (betText != null && slotMachine != null)
-                betText.text = $"Bet: {FormatCoins(slotMachine.betAmount)}";
+            if (slotMachine != null)
+            {
+                long bet = slotMachine.betAmount;
+                if (bet != _lastBet)
+                {
+                    _lastBet = bet;
+                    if (betText != null)
+                        betText.text = $"Bet: {FormatCoins(bet)}";
+                }
+            }
         }
 
-        if (jackpotText != null && ProgressiveJackpot.Instance != null)
-            jackpotText.text = $"🎰 Jackpot: {FormatCoins(ProgressiveJackpot.Instance.CurrentJackpot)}";
+        if (ProgressiveJackpot.Instance != null)
+        {
+            long jackpot = ProgressiveJackpot.Instance.CurrentJackpot;
+            if (jackpot != _lastJackpot)
+            {
+                _lastJackpot = jackpot;
+                if (jackpotText != null)
+                    jackpotText.text = $"🎰 Jackpot: {FormatCoins(jackpot)}";
+            }
+        }
     }
 
     private static string FormatCoins(long amount)

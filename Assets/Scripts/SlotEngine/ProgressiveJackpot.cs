@@ -68,7 +68,7 @@ public class ProgressiveJackpot : MonoBehaviour
 
         for (int i = tiers.Length - 1; i >= 0; i--)
         {
-            if (UnityEngine.Random.value < DynamicChance(tiers[i]))
+            if (SecureRandom.Value() < DynamicChance(tiers[i]))
             {
                 long prize = tiers[i].currentPool;
                 tiers[i].currentPool = tiers[i].basePool;

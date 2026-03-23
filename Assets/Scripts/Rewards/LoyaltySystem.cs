@@ -176,16 +176,16 @@ public class LoyaltySystem : MonoBehaviour
     private void CheckComebackBonus()
     {
         double lastActive = double.TryParse(PlayerPrefs.GetString(KeyLastActiveTime, "0"), out double v) ? v : 0;
-        string currentSession = GetUtcNow().ToString();
+        string todayKey = DateTime.UtcNow.Date.ToString("yyyy-MM-dd");
 
-        // Only give comeback bonus if away for 24+ hours AND not already given this session
+        // Only give comeback bonus if away for 24+ hours AND not already given today
         if (lastActive > 0 && GetUtcNow() - lastActive >= 86400 &&
-            PlayerPrefs.GetString(KeyComebackGiven, "") != currentSession.Substring(0, 8))
+            PlayerPrefs.GetString(KeyComebackGiven, "") != todayKey)
         {
             PlayerEconomy.Instance?.AddCoins(comebackCoins);
             PlayerEconomy.Instance?.AddFreeSpins(comebackFreeSpins);
             PlayerEconomy.Instance?.AddSuperSpins(comebackSuperSpins);
-            PlayerPrefs.SetString(KeyComebackGiven, GetUtcNow().ToString().Substring(0, 8));
+            PlayerPrefs.SetString(KeyComebackGiven, todayKey);
             PlayerPrefs.Save();
             OnComebackBonus?.Invoke();
             Debug.Log($"[LoyaltySystem] Comeback bonus granted!");
