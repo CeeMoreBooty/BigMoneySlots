@@ -152,6 +152,50 @@ public class ChatManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Fetches the full DM conversation with <paramref name="friendId"/> from the backend
+    /// and merges it into the Friends channel history. Call this when opening a DM thread.
+    /// </summary>
+    public void LoadDMThread(string friendId) =>
+        StartCoroutine(FetchDMThread(friendId));
+
+    private IEnumerator FetchDMThread(string friendId)
+    {
+        string url = $"{BackendClient.BaseUrl}/api/chat/dm/thread/{friendId}?limit=100";
+        using var req = UnityWebRequest.Get(url);
+        req.timeout = 10;
+        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[ChatManager] LoadDMThread failed: {req.error}");
+            yield break;
+        }
+
+        var wrapper = JsonUtility.FromJson<ChatMessageListWrapper>(req.downloadHandler.text);
+        if (wrapper?.messages == null) yield break;
+
+        // Merge into Friends history (avoid duplicates by timestamp)
+        var existing = _history[ChatChannel.Friends];
+        var existingTs = new System.Collections.Generic.HashSet<long>();
+        foreach (var m in existing) existingTs.Add(m.timestamp);
+
+        foreach (var m in wrapper.messages)
+        {
+            if (!existingTs.Contains(m.timestamp))
+                existing.Add(m);
+        }
+        // Re-sort chronologically
+        existing.Sort((a, b) => a.timestamp.CompareTo(b.timestamp));
+        // Trim to cap
+        while (existing.Count > MaxHistoryPerChannel) existing.RemoveAt(0);
+
+        OnMessageReceived?.Invoke(ChatChannel.Friends, null); // null signals a full refresh
+    }
+
+    [Serializable] private class ChatMessageListWrapper { public List<ChatMessage> messages; }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void AddToHistory(ChatChannel channel, ChatMessage msg)
     {
