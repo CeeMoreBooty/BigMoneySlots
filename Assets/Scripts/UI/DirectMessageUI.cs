@@ -34,6 +34,7 @@ using TMPro;
 /// </summary>
 public class DirectMessageUI : MonoBehaviour
 {
+    public static DirectMessageUI Instance { get; private set; }
     [Header("Panel")]
     public GameObject panel;
 
@@ -68,6 +69,8 @@ public class DirectMessageUI : MonoBehaviour
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
         sendButton?.onClick.AddListener(OnSendClicked);
         inputField?.onSubmit.AddListener(_ => OnSendClicked());
         backButton?.onClick.AddListener(ShowInbox);
