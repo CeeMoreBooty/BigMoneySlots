@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   symbolId: 4
   symbolName: CHERRY
-  sprite: {fileID: 0}
+  sprite: {fileID: 21300000, guid: 7523fb12e33301c8cdf1f51c972fec0c, type: 3}

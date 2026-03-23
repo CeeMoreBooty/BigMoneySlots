@@ -142,6 +142,43 @@ PlayerSettings:
     16:9: 1
     Others: 1
   bundleVersion: 1.0
+  AndroidBundleVersionCode: 1
+  AndroidMinSdkVersion: 22
+  AndroidTargetSdkVersion: 33
+  AndroidSdkVersion: 33
+  AndroidNdkVersion: 23
+  AndroidDeviceSocketAddress:
+  AndroidKeyaliasName:
+  AndroidKeyPass:
+  AndroidKeystoreName:
+  AndroidKeystorePass:
+  AndroidTargetDevice: 2
+  AndroidSplashScreenScale: 0
+  androidSplashScreen: {fileID: 0}
+  AndroidKeystoreDebug: 0
+  AndroidIsGame: 1
+  AndroidEnableOnDemandResources: 0
+  AndroidApplicationEntry: 0
+  AndroidValidateAppBundleSize: 1
+  AndroidAppBundleSizeToValidate: 150
+  m_BuildTargetIcons: []
+  m_BuildTargetPlatformIcons: []
+  m_BuildTargetBatching: []
+  m_BuildTargetGraphicsAPIs:
+  - m_BuildTarget: AndroidPlayer
+    m_APIs: 150000000
+    m_Automatic: 1
+  m_BuildTargetVRSettings: []
+  m_DefaultShaderChunkSizeInMB: 16
+  m_DefaultShaderChunkCount: 0
+  openGLRequireES31: 0
+  openGLRequireES31AEP: 0
+  openGLRequireES32: 0
+  applicationIdentifier:
+    Android: com.bigmoneyslotsudio.bigmoneyslots
+    iPhone: com.bigmoneyslotsudio.bigmoneyslots
+    Standalone: com.bigmoneyslotsudio.bigmoneyslots
+  buildNumber: {}
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0

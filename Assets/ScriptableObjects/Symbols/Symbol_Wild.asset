@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   symbolId: 0
   symbolName: WILD
-  sprite: {fileID: 0}
+  sprite: {fileID: 21300000, guid: dce9a06cfdc31de39dee143c7bb3b9b3, type: 3}
