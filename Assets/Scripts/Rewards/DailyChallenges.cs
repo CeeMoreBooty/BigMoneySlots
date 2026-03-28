@@ -164,7 +164,7 @@ public class DailyChallenges : MonoBehaviour
 
         // Pick 3 non-duplicate type challenges
         var chosen = new List<int>();
-        var usedTypes = new System.Collections.Generic.HashSet<ChallengeType>();
+        var usedTypes = new HashSet<ChallengeType>();
         while (chosen.Count < 3 && chosen.Count < pool.Count)
         {
             int idx = rng.Next(pool.Count);

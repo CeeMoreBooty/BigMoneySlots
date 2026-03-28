@@ -144,7 +144,6 @@ public class ChatManager : MonoBehaviour
         var list = _history[channel];
         list.Add(msg);
         if (list.Count > MaxHistoryPerChannel) list.RemoveAt(0);
-        OnMessageReceived?.Invoke(channel, msg);
     }
 
     private static string SanitizeText(string text)
