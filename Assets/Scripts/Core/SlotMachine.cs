@@ -5,6 +5,9 @@ using UnityEngine;
 
 /// <summary>
 /// Core slot machine logic: reel spinning, win evaluation, and bet management.
+///
+/// Economy: uses <see cref="PlayerEconomy"/> singleton when available,
+/// falling back to <see cref="GameManager.userData"/> for legacy support.
 /// </summary>
 public class SlotMachine : MonoBehaviour
 {
@@ -37,7 +40,7 @@ public class SlotMachine : MonoBehaviour
     [Header("Bet")]
     [SerializeField] private long minBet    = 1_000L;
     [SerializeField] private long maxBet    = 100_000_000L;
-    private long currentBet                 = 1_000L;
+    private long _currentBet                = 1_000L;
 
     // Payline multipliers indexed by symbol
     private static readonly Dictionary<Symbol, long> SymbolMultiplier = new Dictionary<Symbol, long>
@@ -53,16 +56,27 @@ public class SlotMachine : MonoBehaviour
         { Symbol.Wild,    200 }
     };
 
-    private Symbol[,] reelResult;
-    private bool isSpinning;
+    private Symbol[,] _reelResult;
+    private bool _isSpinning;
 
+    /// <summary>Fires with full reel grid data and win level (used by SlotMachineUI / SlotGameSceneController).</summary>
     public event Action<Symbol[,], long, WinLevel> OnSpinFinished;
 
-    public long CurrentBet => currentBet;
+    /// <summary>Fires with simple (payout, isJackpot) payload (used by SlotUI).</summary>
+    public event Action<long, bool> OnSpinComplete;
+
+    public long CurrentBet => _currentBet;
+
+    /// <summary>Field alias so Inspector-serialised <c>betAmount</c> values are honoured.</summary>
+    public long betAmount
+    {
+        get => _currentBet;
+        set => SetBet(value);
+    }
 
     public void SetBet(long bet)
     {
-        currentBet = Mathf.Clamp((long)bet, minBet, maxBet);
+        _currentBet = bet < minBet ? minBet : (bet > maxBet ? maxBet : bet);
     }
 
     public void IncreaseBet()
@@ -72,13 +86,9 @@ public class SlotMachine : MonoBehaviour
                          10_000_000, 50_000_000, 100_000_000 };
         for (int i = 0; i < steps.Length - 1; i++)
         {
-            if (currentBet < steps[i + 1])
-            {
-                currentBet = steps[i + 1];
-                return;
-            }
+            if (_currentBet < steps[i + 1]) { _currentBet = steps[i + 1]; return; }
         }
-        currentBet = maxBet;
+        _currentBet = maxBet;
     }
 
     public void DecreaseBet()
@@ -88,33 +98,54 @@ public class SlotMachine : MonoBehaviour
                          10_000_000, 50_000_000, 100_000_000 };
         for (int i = steps.Length - 1; i > 0; i--)
         {
-            if (currentBet > steps[i - 1])
-            {
-                currentBet = steps[i - 1];
-                return;
-            }
+            if (_currentBet > steps[i - 1]) { _currentBet = steps[i - 1]; return; }
         }
-        currentBet = minBet;
+        _currentBet = minBet;
     }
 
     public void Spin()
     {
-        if (isSpinning) return;
-        if (!GameManager.Instance.userData.SpendCoins(currentBet)) return;
+        if (_isSpinning) return;
 
-        isSpinning = true;
+        // Deduct bet — prefer the PlayerEconomy singleton, fall back to UserData via GameManager
+        bool spent = false;
+        if (PlayerEconomy.Instance != null)
+            spent = PlayerEconomy.Instance.SpendCoins(_currentBet);
+        else if (GameManager.Instance?.userData != null)
+            spent = GameManager.Instance.userData.SpendCoins(_currentBet);
+
+        if (!spent) return;
+
+        _isSpinning = true;
         StartCoroutine(SpinCoroutine());
     }
 
     private IEnumerator SpinCoroutine()
     {
-        yield return new WaitForSeconds(1.5f); // animation time
+        yield return new WaitForSeconds(1.5f);
 
-        reelResult = GenerateResult();
-        long payout   = CalculatePayout(reelResult, currentBet, out WinLevel winLevel);
+        _reelResult = GenerateResult();
+        long payout = CalculatePayout(_reelResult, _currentBet, out WinLevel winLevel);
 
-        isSpinning = false;
-        OnSpinFinished?.Invoke(reelResult, payout, winLevel);
+        // Apply multipliers and award payout
+        if (payout > 0)
+        {
+            float mult = PlayerEconomy.Instance?.GetActiveMultiplier() ?? 1f;
+            payout = (long)(payout * mult);
+            if (LoyaltySystem.Instance != null)
+                payout = LoyaltySystem.Instance.ApplyTierBonus(payout);
+
+            if (PlayerEconomy.Instance != null)
+                PlayerEconomy.Instance.AddCoins(payout);
+            else
+                GameManager.Instance?.userData?.AddCoins(payout);
+        }
+
+        LoyaltySystem.Instance?.RegisterSpin();
+        _isSpinning = false;
+
+        OnSpinFinished?.Invoke(_reelResult, payout, winLevel);
+        OnSpinComplete?.Invoke(payout, false);
         GameManager.Instance?.OnSpinComplete(payout, winLevel);
     }
 
@@ -133,7 +164,7 @@ public class SlotMachine : MonoBehaviour
         long totalPayout = 0L;
         winLevel = WinLevel.None;
 
-        // Check middle payline
+        // Check middle payline (row index 1)
         bool allMatch = true;
         Symbol first = result[0, 1];
         for (int r = 1; r < reelCount; r++)
@@ -156,27 +187,24 @@ public class SlotMachine : MonoBehaviour
         }
         else
         {
-            // Count matching symbols from left
+            // Partial match: count consecutive symbols from left
             int matchCount = 1;
             Symbol s0 = result[0, 1];
             for (int r = 1; r < reelCount; r++)
             {
                 Symbol s = result[r, 1];
-                if (s == s0 || s == Symbol.Wild)
-                    matchCount++;
-                else
-                    break;
+                if (s == s0 || s == Symbol.Wild) matchCount++;
+                else break;
             }
             if (matchCount >= 3)
                 totalPayout = bet * (matchCount - 2) * 2;
         }
 
-        // Determine win level based on payout vs bet ratio
-        float ratio = bet > 0 ? (float)totalPayout / bet : 0;
-        if      (ratio >= 100) winLevel = WinLevel.EpicWin;
-        else if (ratio >= 25)  winLevel = WinLevel.MegaWin;
-        else if (ratio >= 10)  winLevel = WinLevel.BigWin;
-        else if (ratio > 0)    winLevel = WinLevel.Normal;
+        float ratio = bet > 0 ? (float)totalPayout / bet : 0f;
+        if      (ratio >= 100f) winLevel = WinLevel.EpicWin;
+        else if (ratio >= 25f)  winLevel = WinLevel.MegaWin;
+        else if (ratio >= 10f)  winLevel = WinLevel.BigWin;
+        else if (ratio > 0f)    winLevel = WinLevel.Normal;
 
         return totalPayout;
     }
