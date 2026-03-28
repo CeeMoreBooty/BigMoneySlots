@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Money Slots — Secure Checkout</title>
+  <style>
+    /* ── PGCN Brand Palette ─────────────────────────────────────── */
+    :root {
+      --gold:        #FFD700;
+      --gold-light:  #FFE84D;
+      --gold-dark:   #B8960C;
+      --dark:        #0D0D1A;
+      --dark-card:   #161628;
+      --dark-border: #2A2A4A;
+      --green:       #00C896;
+      --red:         #FF4B4B;
+      --text:        #F0F0FF;
+      --text-muted:  #8888AA;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* ── Header / Brand ─────────────────────────────────────────── */
+    .brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .brand-header .logo-ring {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      background: radial-gradient(circle at 40% 40%, #1a1a3a, #0D0D1A);
+      box-shadow: 0 0 24px rgba(255,215,0,0.35);
+      font-size: 32px;
+    }
+    .brand-header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255,215,0,0.4);
+    }
+    .brand-header .pgcn-tag {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── Checkout Card ──────────────────────────────────────────── */
+    .checkout-card {
+      background: var(--dark-card);
+      border: 1px solid var(--dark-border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    /* ── Product summary ────────────────────────────────────────── */
+    .product-summary {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(255,215,0,0.06);
+      border: 1px solid rgba(255,215,0,0.18);
+      border-radius: 10px;
+      margin-bottom: 24px;
+    }
+    .product-icon { font-size: 36px; }
+    .product-info { flex: 1; }
+    .product-name { font-weight: 700; font-size: 1rem; color: var(--gold-light); }
+    .product-desc { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    .product-price {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    /* ── Section label ──────────────────────────────────────────── */
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Card field containers (PayPal Card Fields iframes mount here) */
+    .card-field {
+      background: #0D0D1A;
+      border: 1px solid var(--dark-border);
+      border-radius: 8px;
+      height: 46px;
+      padding: 0 12px;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    .card-field.focused { border-color: var(--gold); }
+
+    /* Name-on-card is a plain <input> — styled to match the iframes */
+    #card-name {
+      width: 100%;
+      background: #0D0D1A;
+      border: 1px solid var(--dark-border);
+      border-radius: 8px;
+      height: 46px;
+      padding: 0 12px;
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    #card-name::placeholder { color: #4a4a6a; }
+    #card-name:focus { border-color: var(--gold); }
+
+    /* Expiry + CVV side by side */
+    .card-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .card-row .card-field { margin-bottom: 0; }
+
+    /* ── Pay button ─────────────────────────────────────────────── */
+    #pay-btn {
+      margin-top: 22px;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: #0D0D1A;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 18px rgba(255,215,0,0.3);
+    }
+    #pay-btn:hover:not(:disabled) { opacity: 0.92; }
+    #pay-btn:active:not(:disabled) { transform: scale(0.98); }
+    #pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Status messages ────────────────────────────────────────── */
+    #status-msg {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      min-height: 20px;
+    }
+    #status-msg.success { color: var(--green); }
+    #status-msg.error   { color: var(--red); }
+
+    /* ── Security badge row ─────────────────────────────────────── */
+    .security-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .security-row svg { opacity: 0.6; }
+
+    /* ── Footer ─────────────────────────────────────────────────── */
+    .checkout-footer {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .checkout-footer a { color: var(--gold-dark); text-decoration: none; }
+
+    /* ── Loading spinner ────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(13,13,26,0.4);
+      border-top-color: #0D0D1A;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .checkout-card { padding: 22px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Brand header -->
+  <div class="brand-header">
+    <div class="logo-ring">🎰</div>
+    <h1>Big Money Slots</h1>
+    <div class="pgcn-tag">PGCN · Secure Checkout</div>
+  </div>
+
+  <!-- Main card -->
+  <div class="checkout-card">
+
+    <!-- Product summary (populated by JS from URL params) -->
+    <div class="product-summary">
+      <div class="product-icon" id="prod-icon">💎</div>
+      <div class="product-info">
+        <div class="product-name" id="prod-name">Loading…</div>
+        <div class="product-desc" id="prod-desc"></div>
+      </div>
+      <div class="product-price" id="prod-price"></div>
+    </div>
+
+    <!-- Card details -->
+    <div class="section-label">Card Details</div>
+
+    <!-- Name on card — plain input, styled to match card field iframes -->
+    <input id="card-name" type="text" placeholder="Name on card" autocomplete="cc-name" />
+
+    <!-- PayPal Card Fields mount points -->
+    <div id="card-number" class="card-field"></div>
+    <div class="card-row">
+      <div id="card-expiry" class="card-field"></div>
+      <div id="card-cvv"    class="card-field"></div>
+    </div>
+
+    <!-- Pay button -->
+    <button id="pay-btn" disabled>Loading…</button>
+
+    <!-- Status -->
+    <div id="status-msg"></div>
+
+    <!-- Security badge -->
+    <div class="security-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      256-bit SSL · Secured by PayPal
+    </div>
+
+    <!-- Footer -->
+    <div class="checkout-footer">
+      By completing this purchase you agree to our
+      <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br/>
+      All card payments are processed securely by PayPal.<br/>
+      Questions? <a href="mailto:tech.crew151@gmail.com">tech.crew151@gmail.com</a>
+    </div>
+  </div>
+
+  <script>
+  (async () => {
+    // ── Read URL params ─────────────────────────────────────────────────────
+    const params    = new URLSearchParams(window.location.search);
+    const productId = params.get('productId') || '';
+    const jwt       = params.get('token')     || '';
+
+    // ── Product catalog (mirrors Backend/routes/payments.js) ───────────────
+    const PRODUCTS = {
+      welcomeofferpack: { name: 'Welcome Offer Pack', desc: '150B Coins · 200 Free Spins · 25 Super Spins · VIP Badge', price: '$4.99', rawPrice: '4.99', icon: '🎁' },
+      gems_100:  { name: '100 Gems',    desc: 'Hard currency for exclusive items', price: '$0.99',  rawPrice: '0.99',  icon: '💎' },
+      gems_500:  { name: '500 Gems',    desc: 'Hard currency for exclusive items', price: '$4.99',  rawPrice: '4.99',  icon: '💎' },
+      gems_1200: { name: '1,200 Gems',  desc: 'Best value · Popular',              price: '$9.99',  rawPrice: '9.99',  icon: '💎' },
+      gems_2500: { name: '2,500 Gems',  desc: 'Super value bundle',                price: '$19.99', rawPrice: '19.99', icon: '💎' },
+      gems_6500: { name: '6,500 Gems',  desc: 'Ultimate bundle · Most gems',       price: '$49.99', rawPrice: '49.99', icon: '💎' },
+    };
+
+    const prod = PRODUCTS[productId];
+    if (!prod) {
+      document.getElementById('prod-name').textContent = 'Invalid product';
+      document.getElementById('pay-btn').textContent   = 'Unavailable';
+      return;
+    }
+
+    // ── Populate product summary ────────────────────────────────────────────
+    document.getElementById('prod-icon').textContent  = prod.icon;
+    document.getElementById('prod-name').textContent  = prod.name;
+    document.getElementById('prod-desc').textContent  = prod.desc;
+    document.getElementById('prod-price').textContent = prod.price;
+
+    // ── Fetch PayPal client ID from server ──────────────────────────────────
+    let clientId;
+    try {
+      const res = await fetch('/api/payments/paypal/config');
+      if (!res.ok) throw new Error('Could not load payment config');
+      clientId = (await res.json()).clientId;
+    } catch (err) {
+      setStatus('error', '⚠ Could not load checkout: ' + err.message);
+      return;
+    }
+
+    // ── Load PayPal SDK dynamically ─────────────────────────────────────────
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&components=card-fields&currency=USD`;
+      script.onload  = resolve;
+      script.onerror = () => reject(new Error('PayPal SDK failed to load'));
+      document.head.appendChild(script);
+    });
+
+    // ── PayPal Card Fields shared style ────────────────────────────────────
+    const fieldStyle = {
+      input: {
+        'color':        '#F0F0FF',
+        'font-family':  "'Segoe UI', Arial, sans-serif",
+        'font-size':    '16px',
+      },
+      ':placeholder': { 'color': '#4a4a6a' },
+    };
+
+    // ── Initialise PayPal Card Fields ───────────────────────────────────────
+    const cardFields = window.paypal.CardFields({
+
+      // Called when the SDK needs an order — we create one on the server
+      createOrder: async () => {
+        const res = await fetch('/api/payments/paypal/create-order', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${jwt}`,
+          },
+          body: JSON.stringify({ productId }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || 'Could not create order');
+        const { orderId } = await res.json();
+        return orderId;
+      },
+
+      // Called by PayPal after the card is approved — we capture + grant
+      onApprove: async (data) => {
+        try {
+          const res = await fetch('/api/payments/paypal/capture', {
+            method:  'POST',
+            headers: {
+              'Content-Type':  'application/json',
+              'Authorization': `Bearer ${jwt}`,
+            },
+            body: JSON.stringify({ orderId: data.orderID, productId }),
+          });
+          if (!res.ok) throw new Error((await res.json()).error || 'Capture failed');
+
+          const btn = document.getElementById('pay-btn');
+          btn.textContent = '✓ Payment successful!';
+          setStatus('success', '🎉 Purchase complete! Returning to game…');
+
+          // Deep-link back to Unity
+          setTimeout(() => {
+            window.location.href =
+              `bigmoneyslots://paypal/success?productId=${encodeURIComponent(productId)}&orderId=${encodeURIComponent(data.orderID)}`;
+          }, 2000);
+        } catch (err) {
+          resetBtn();
+          setStatus('error', '✗ ' + err.message);
+        }
+      },
+
+      onError: (err) => {
+        resetBtn();
+        setStatus('error', '✗ ' + (err.message || 'Payment failed'));
+      },
+    });
+
+    // ── Mount individual card field iframes ─────────────────────────────────
+    if (!cardFields.isEligible()) {
+      setStatus('error', '⚠ Card payments are not available in your region. Please contact support.');
+      return;
+    }
+
+    cardFields.NumberField({ style: fieldStyle, placeholder: 'Card number' }).render('#card-number');
+    cardFields.ExpiryField({ style: fieldStyle, placeholder: 'MM / YY'    }).render('#card-expiry');
+    cardFields.CVVField(   { style: fieldStyle, placeholder: 'CVV'        }).render('#card-cvv');
+
+    // Highlight container border on focus/blur (PayPal fires these events on the parent)
+    ['card-number', 'card-expiry', 'card-cvv'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('focusin',  () => el.classList.add('focused'));
+      el.addEventListener('focusout', () => el.classList.remove('focused'));
+    });
+
+    // ── Enable pay button ───────────────────────────────────────────────────
+    const btn = document.getElementById('pay-btn');
+    btn.textContent = `Pay ${prod.price}`;
+    btn.disabled    = false;
+
+    btn.addEventListener('click', async () => {
+      btn.disabled   = true;
+      btn.innerHTML  = '<span class="spinner"></span>Processing…';
+      clearStatus();
+
+      try {
+        await cardFields.submit({
+          billingAddress: {
+            // Name is taken from the plain input above
+            fullName: document.getElementById('card-name').value.trim() || undefined,
+          },
+        });
+      } catch (err) {
+        resetBtn();
+        setStatus('error', '✗ ' + (err.message || 'Payment failed'));
+      }
+    });
+
+    function resetBtn() {
+      const btn = document.getElementById('pay-btn');
+      btn.disabled    = false;
+      btn.textContent = `Pay ${prod.price}`;
+    }
+    function setStatus(type, msg) {
+      const el = document.getElementById('status-msg');
+      el.textContent = msg;
+      el.className   = type;
+    }
+    function clearStatus() {
+      const el = document.getElementById('status-msg');
+      el.textContent = '';
+      el.className   = '';
+    }
+  })();
+  </script>
+
+</body>
+</html>

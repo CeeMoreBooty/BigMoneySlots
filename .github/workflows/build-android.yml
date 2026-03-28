@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK / AAB
+    runs-on: ubuntu-latest
+    # game-ci/unity-builder requires a Unity license.
+    # Add the following repository secrets before running:
+    #   UNITY_LICENSE       – contents of your Unity_v202x.x.ulf licence file
+    #   UNITY_EMAIL         – Unity account e-mail
+    #   UNITY_PASSWORD      – Unity account password
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      # Cache the Library folder to speed up subsequent builds
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+            Library-
+
+      - name: Build Android (APK)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform:    Android
+          unityVersion:      2022.3.20f1
+          buildName:         BigMoneySlots
+          # Outputs build/Android/BigMoneySlots.apk
+          buildMethod:       ""          # uses default build method
+          androidExportType: androidPackage   # 'androidPackage' = APK, 'androidAppBundle' = AAB
+          androidKeystoreName:   ${{ secrets.ANDROID_KEYSTORE_NAME   || '' }}
+          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 || '' }}
+          androidKeystorePass:   ${{ secrets.ANDROID_KEYSTORE_PASS   || '' }}
+          androidKeyaliasName:   ${{ secrets.ANDROID_KEYALIAS_NAME   || '' }}
+          androidKeyaliasPass:   ${{ secrets.ANDROID_KEYALIAS_PASS   || '' }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BigMoneySlots-Android
+          path: build/Android
+          retention-days: 14

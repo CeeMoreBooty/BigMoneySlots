@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGO_URI: mongodb://mongo:27017/bigmoneyslots
+      # Override remaining secrets via a real .env file on the host:
+      #   docker-compose --env-file .env up
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - bms-net
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bms-net
+
+volumes:
+  mongo-data:
+
+networks:
+  bms-net:
