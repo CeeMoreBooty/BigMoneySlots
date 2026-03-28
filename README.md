@@ -26,12 +26,15 @@ This repository is configured with GitHub Actions for automatic deployment:
 4. Uncomment Heroku section in `.github/workflows/deploy-backend.yml`
 5. Push to Main branch - automatic deployment!
 
-**Option 2: Railway**
+**Option 2: Railway** (⭐ Recommended - Easiest!)
 1. Sign up at https://railway.app
-2. Connect your GitHub repo
-3. Railway will auto-detect the Node.js app in `Backend/`
-4. Set environment variables in Railway dashboard
-5. Deploy with one click!
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select `BigMoneySlots` repository → `railway-deployment` branch
+4. Add MongoDB plugin (one click)
+5. Configure environment variables
+6. Deploy automatically!
+
+📖 **[Complete Railway Setup Guide](RAILWAY_DEPLOYMENT.md)** - Step-by-step instructions
 
 **Option 3: Render**
 1. Sign up at https://render.com
