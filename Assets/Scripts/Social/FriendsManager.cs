@@ -68,18 +68,20 @@ public class FriendsManager : MonoBehaviour
     private IEnumerator GetFriends()
     {
         string url = $"{BackendClient.BaseUrl}/api/friends";
-        using var req = UnityWebRequest.Get(url);
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = UnityWebRequest.Get(url))
         {
-            var wrapper = JsonUtility.FromJson<FriendsWrapper>(req.downloadHandler.text);
-            if (wrapper != null)
+            req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityWebRequest.Result.Success)
             {
-                Friends = wrapper.friends  ?? new List<Friend>();
-                Pending = wrapper.pending  ?? new List<Friend>();
-                OnFriendsUpdated?.Invoke();
+                var wrapper = JsonUtility.FromJson<FriendsWrapper>(req.downloadHandler.text);
+                if (wrapper != null)
+                {
+                    Friends = wrapper.friends  ?? new List<Friend>();
+                    Pending = wrapper.pending  ?? new List<Friend>();
+                    OnFriendsUpdated?.Invoke();
+                }
             }
         }
     }
@@ -88,17 +90,19 @@ public class FriendsManager : MonoBehaviour
     {
         string url  = $"{BackendClient.BaseUrl}/api/friends/{action}";
         string body = $"{{\"targetPlayerId\":\"{targetPlayerId}\"}}";
-        using var req = new UnityWebRequest(url, "POST");
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type",  "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = new UnityWebRequest(url, "POST"))
         {
-            if (action == "accept") OnFriendAccepted?.Invoke(targetPlayerId);
-            FetchFriends();
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type",  "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                if (action == "accept") OnFriendAccepted?.Invoke(targetPlayerId);
+                FetchFriends();
+            }
         }
     }
 

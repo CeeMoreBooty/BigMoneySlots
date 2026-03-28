@@ -37,6 +37,13 @@ config/google-service-account.json
 *.aab
 *.ipa
 
+# ── Unity auto-generated lock file (do not commit) ────────────────────────────
+Packages/packages-lock.json
+
+# ── Unity crash / diagnostics ─────────────────────────────────────────────────
+crashlytics-build.properties
+sysinfo.txt
+
 # ── OS artifacts ──────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
