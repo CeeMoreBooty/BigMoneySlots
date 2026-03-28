@@ -155,6 +155,21 @@ Access metrics in the **Metrics** tab.
 
 ## 🐛 Troubleshooting
 
+### Error 19: Build Failed
+
+**Symptoms:** Railway shows "Error: 19" during build/deployment
+
+**Cause:** Railway couldn't detect the correct build configuration or start command
+
+**Fix:**
+1. Ensure you're deploying the `railway-deployment` branch (not `main`)
+2. Check that `railway.toml`, `nixpacks.toml`, and `Procfile` exist in the root
+3. Verify `Backend/package.json` exists with correct start script
+4. In Railway dashboard, go to **Settings** → **Deploy** and set:
+   - **Build Command:** `npm install --prefix Backend`
+   - **Start Command:** `node Backend/server.js`
+5. Redeploy the service
+
 ### Build Fails
 
 **Check:**
