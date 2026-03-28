@@ -65,23 +65,25 @@ public class InviteRewardManager : MonoBehaviour
     private IEnumerator GetCode()
     {
         string url = $"{BackendClient.BaseUrl}/api/invite/code";
-        using var req = UnityWebRequest.Get(url);
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
+        using (var req = UnityWebRequest.Get(url))
+        {
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
 
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            var data = JsonUtility.FromJson<CodeResponse>(req.downloadHandler.text);
-            MyCode             = data.code;
-            TotalInvites       = data.totalInvites;
-            GemsEarned         = data.gemsEarned;
-            GemRewardPerInvite = data.gemRewardPerInvite;
-            GemRewardForNew    = data.gemRewardForNew;
-            OnCodeFetched?.Invoke();
-        }
-        else
-        {
-            Debug.LogWarning($"[InviteRewardManager] FetchMyCode failed: {req.error}");
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                var data = JsonUtility.FromJson<CodeResponse>(req.downloadHandler.text);
+                MyCode             = data.code;
+                TotalInvites       = data.totalInvites;
+                GemsEarned         = data.gemsEarned;
+                GemRewardPerInvite = data.gemRewardPerInvite;
+                GemRewardForNew    = data.gemRewardForNew;
+                OnCodeFetched?.Invoke();
+            }
+            else
+            {
+                Debug.LogWarning($"[InviteRewardManager] FetchMyCode failed: {req.error}");
+            }
         }
     }
 
@@ -89,33 +91,35 @@ public class InviteRewardManager : MonoBehaviour
     {
         string url  = $"{BackendClient.BaseUrl}/api/invite/redeem";
         string body = $"{{\"code\":\"{code}\"}}";
-        using var req = new UnityWebRequest(url, "POST");
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type",  "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type",  "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
 
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            var data = JsonUtility.FromJson<RedeemResponse>(req.downloadHandler.text);
-            GemSystem.Instance?.AddGems(data.gemsAwarded);
-            OnCodeRedeemed?.Invoke(data.gemsAwarded);
-            Debug.Log($"[InviteRewardManager] Code redeemed! +{data.gemsAwarded} gems.");
-        }
-        else
-        {
-            // Parse error message from backend JSON if possible
-            string msg = "Invalid or already-used code.";
-            try
+            if (req.result == UnityWebRequest.Result.Success)
             {
-                var err = JsonUtility.FromJson<ErrorResponse>(req.downloadHandler.text);
-                if (!string.IsNullOrEmpty(err.error)) msg = err.error;
+                var data = JsonUtility.FromJson<RedeemResponse>(req.downloadHandler.text);
+                GemSystem.Instance?.AddGems(data.gemsAwarded);
+                OnCodeRedeemed?.Invoke(data.gemsAwarded);
+                Debug.Log($"[InviteRewardManager] Code redeemed! +{data.gemsAwarded} gems.");
             }
-            catch { /* ignore parse failure */ }
+            else
+            {
+                // Parse error message from backend JSON if possible
+                string msg = "Invalid or already-used code.";
+                try
+                {
+                    var err = JsonUtility.FromJson<ErrorResponse>(req.downloadHandler.text);
+                    if (!string.IsNullOrEmpty(err.error)) msg = err.error;
+                }
+                catch { /* ignore parse failure */ }
 
-            Debug.LogWarning($"[InviteRewardManager] Redeem failed: {msg}");
-            OnRedeemFailed?.Invoke(msg);
+                Debug.LogWarning($"[InviteRewardManager] Redeem failed: {msg}");
+                OnRedeemFailed?.Invoke(msg);
+            }
         }
     }
 
