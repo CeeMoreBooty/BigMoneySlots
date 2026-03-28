@@ -1,0 +1,43 @@
+# ── Node / npm ────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+
+# ── Environment / Secrets ─────────────────────────────────────────────────────
+# NEVER commit .env — it contains real API keys and secrets
+.env
+env.
+Backend/.env
+*.env
+*.env.local
+*.env.production
+*.env.staging
+
+# ── Google service account key (contains private key) ────────────────────────
+Backend/config/google-service-account.json
+config/google-service-account.json
+
+# ── Unity build artifacts ─────────────────────────────────────────────────────
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+*.pidb
+*.suo
+*.userprefs
+*.sln
+*.csproj
+*.unityproj
+*.DS_Store
+*.apk
+*.aab
+*.ipa
+
+# ── OS artifacts ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
