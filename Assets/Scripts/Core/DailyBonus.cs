@@ -6,6 +6,16 @@ using UnityEngine;
 /// </summary>
 public class DailyBonus : MonoBehaviour
 {
+    public static DailyBonus Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
+
     private const string LastClaimKey  = "DB_LastClaim";
     private const string StreakKey     = "DB_Streak";
 
