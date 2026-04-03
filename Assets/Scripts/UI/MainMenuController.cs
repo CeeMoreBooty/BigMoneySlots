@@ -18,6 +18,13 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button dailyBonusButton;
     [SerializeField] private Button leaderboardButton;
+    [SerializeField] private Button challengesButton;
+    [SerializeField] private Button achievementsButton;
+
+    [Header("Popups / Systems")]
+    [SerializeField] private LeaderboardController leaderboardController;
+    [SerializeField] private DailyChallenges       dailyChallenges;
+    [SerializeField] private DailyBonusController  dailyBonusController;
 
     [Header("Daily Bonus")]
     [SerializeField] private GameObject dailyBonusReadyIndicator;
@@ -35,6 +42,8 @@ public class MainMenuController : MonoBehaviour
         settingsButton?.onClick.AddListener(OnSettings);
         dailyBonusButton?.onClick.AddListener(OnDailyBonus);
         leaderboardButton?.onClick.AddListener(OnLeaderboard);
+        challengesButton?.onClick.AddListener(OnChallenges);
+        achievementsButton?.onClick.AddListener(OnAchievements);
     }
 
     private void Update()
@@ -104,7 +113,21 @@ public class MainMenuController : MonoBehaviour
     private void OnLeaderboard()
     {
         SoundManager.Instance?.PlayButtonClick();
-        // TODO: open leaderboard panel / social integration
-        Debug.Log("Leaderboard button pressed");
+        if (leaderboardController != null)
+            leaderboardController.Show();
+        else
+            Debug.Log("Leaderboard button pressed (controller not assigned)");
+    }
+
+    private void OnChallenges()
+    {
+        SoundManager.Instance?.PlayButtonClick();
+        dailyChallenges?.Show();
+    }
+
+    private void OnAchievements()
+    {
+        SoundManager.Instance?.PlayButtonClick();
+        AchievementManager.Instance?.ShowList();
     }
 }

@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100200001
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100200002}
+  - component: {fileID: 100200003}
+  - component: {fileID: 100200004}
+  m_Layer: 5
+  m_Name: DaySlotUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_IsActive: 1
+--- !u!224 &100200002
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100200001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 100200010}
+  - {fileID: 100200020}
+  - {fileID: 100200030}
+  - {fileID: 100200040}
+  m_Father: {fileID: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 130, y: 160}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100200003
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CullTransparentMesh: 1
+--- !u!114 &100200004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100200001}
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 0}
+  m_Color: {r: 0.15, g: 0.08, b: 0.35, a: 1}
+  m_RaycastTarget: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 1
+--- !u!1 &100200009
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100200010}
+  - component: {fileID: 100200011}
+  - component: {fileID: 100200012}
+  m_Layer: 5
+  m_Name: DayText
+  m_IsActive: 1
+--- !u!224 &100200010
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100200002}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0.7}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100200011
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100200012
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: f4688fdb7825415993f64536399f3a6d, type: 0}
+  m_text: Day 1
+  m_fontSize: 22
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+--- !u!1 &100200019
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100200020}
+  - component: {fileID: 100200021}
+  - component: {fileID: 100200022}
+  m_Layer: 5
+  m_Name: RewardIcon
+  m_IsActive: 1
+--- !u!224 &100200020
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100200002}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.15, y: 0.32}
+  m_AnchorMax: {x: 0.85, y: 0.7}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100200021
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100200022
+MonoBehaviour:
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 0}
+  m_Color: {r: 1, g: 0.84, b: 0, a: 1}
+  m_RaycastTarget: 0
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+--- !u!1 &100200029
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100200030}
+  - component: {fileID: 100200031}
+  - component: {fileID: 100200032}
+  m_Layer: 5
+  m_Name: RewardText
+  m_IsActive: 1
+--- !u!224 &100200030
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100200002}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0, y: 0.08}
+  m_AnchorMax: {x: 1, y: 0.32}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100200031
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100200032
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: f4688fdb7825415993f64536399f3a6d, type: 0}
+  m_text: 5,000
+  m_fontSize: 24
+  m_fontColor: {r: 1, g: 0.84, b: 0, a: 1}
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+--- !u!1 &100200039
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100200040}
+  - component: {fileID: 100200041}
+  - component: {fileID: 100200042}
+  m_Layer: 5
+  m_Name: ClaimedOverlay
+  m_IsActive: 0
+--- !u!224 &100200040
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100200002}
+  m_RootOrder: 3
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100200041
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100200042
+MonoBehaviour:
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 0}
+  m_Color: {r: 0.1, g: 0.6, b: 0.1, a: 0.7}
+  m_RaycastTarget: 0
+  m_Sprite: {fileID: 0}
+  m_Type: 0

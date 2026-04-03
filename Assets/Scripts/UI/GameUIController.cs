@@ -39,6 +39,10 @@ public class GameUIController : MonoBehaviour
     [Header("Auto Spin")]
     [SerializeField] private int autoSpinCount = 10;
 
+    [Header("Popups & Systems")]
+    [SerializeField] private InsufficientFundsPopup insufficientFundsPopup;
+    [SerializeField] private DailyChallenges         dailyChallenges;
+
     private bool autoSpinActive;
     private int  autoSpinsLeft;
     private static readonly int JackpotPulse = Animator.StringToHash("Pulse");
@@ -141,6 +145,9 @@ public class GameUIController : MonoBehaviour
     private void HandleSpinStart()
     {
         SetSpinButtonEnabled(false);
+        dailyChallenges?.OnSpin();
+        dailyChallenges?.OnBet(betController?.CurrentBet ?? 500L);
+        AchievementManager.Instance?.CheckSpins();
     }
 
     private void HandleSpinEnd()
@@ -154,11 +161,21 @@ public class GameUIController : MonoBehaviour
     private void HandleWin(long amount)
     {
         winPopup?.ShowWin(amount, betController?.CurrentBet ?? 500L);
+        dailyChallenges?.OnWin(amount);
+
+        long bet = betController?.CurrentBet ?? 500L;
+        if (amount >= bet * 10) dailyChallenges?.OnBigWin();
+
+        AchievementManager.Instance?.CheckWins();
+        AchievementManager.Instance?.CheckBigWin(amount);
+        AchievementManager.Instance?.CheckCoins();
     }
 
     private void HandleJackpot(long amount)
     {
         winPopup?.ShowJackpot(amount);
+        dailyChallenges?.OnJackpot();
+        AchievementManager.Instance?.CheckJackpot();
     }
 
     private void HandleFreeSpins()
@@ -200,7 +217,10 @@ public class GameUIController : MonoBehaviour
 
     private void ShowInsufficientFundsMessage()
     {
-        Debug.Log("Not enough coins! Go to the shop.");
-        // TODO: show a popup nudging the player to the shop
+        long bet = betController?.CurrentBet ?? 500L;
+        if (insufficientFundsPopup != null)
+            insufficientFundsPopup.Show(bet);
+        else
+            Debug.Log("Not enough coins! Go to the shop.");
     }
 }
