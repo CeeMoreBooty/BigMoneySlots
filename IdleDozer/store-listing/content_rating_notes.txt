@@ -1,0 +1,36 @@
+# Play Store Content Rating Notes
+#
+# Google Play requires you to complete the content rating questionnaire in the
+# Play Console. These notes will help you answer the questions correctly.
+#
+# ── Recommended answers ───────────────────────────────────────────────────────
+#
+# "Does your app contain any of the following?"
+#
+#   Violence                     → NO
+#   Sexual content               → NO
+#   Profanity / crude humour     → NO
+#   Controlled substances        → NO
+#   Gambling (real money)        → NO   ← Important: all currency is virtual
+#   Simulated gambling           → NO   ← No slot machines / card games
+#   User-generated content       → NO
+#   User location sharing        → NO
+#   Personal information sharing → NO
+#   Advertisements               → YES  (Google AdMob)
+#
+# Expected IARC / ESRB content rating: EVERYONE (E)
+# Expected Google Play rating:         Everyone
+#
+# ── Ad content ────────────────────────────────────────────────────────────────
+# The app uses Google AdMob. In the Play Console ad settings:
+#   - Ad type: Ads managed by an ad network (Google AdMob)
+#   - Personalised ads: Yes (AdMob default) — ensure your privacy policy covers this
+#
+# ── Privacy Policy requirement ────────────────────────────────────────────────
+# Google Play REQUIRES a privacy policy if your app:
+#   • Targets children, OR
+#   • Contains ads (even just AdMob)
+#
+# Your privacy policy HTML is at: assets/privacy_policy.html
+# Host it (e.g. GitHub Pages) and paste the URL into the Play Console
+# under App content → Privacy policy.
