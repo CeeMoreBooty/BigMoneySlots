@@ -215,7 +215,9 @@ router.post('/unity-iap/verify', auth, async (req, res) => {
             gpData = payloadJson;
         }
 
-        const purchaseToken = gpData.purchaseToken;
+        const purchaseToken = typeof gpData.purchaseToken === 'string'
+            ? gpData.purchaseToken.replace(/[^A-Za-z0-9_\-.:]/g, '').substring(0, 512)
+            : null;
         if (!purchaseToken)
             return res.status(400).json({ error: 'purchaseToken not found in receipt' });
 
