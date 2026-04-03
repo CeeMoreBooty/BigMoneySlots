@@ -84,7 +84,7 @@ public class InviteUI : MonoBehaviour
         if (mgr == null) return;
 
         if (myCodeText      != null) myCodeText.text      = mgr.MyCode;
-        if (totalInvitesText != null) totalInvitesText.text = $"{mgr.TotalInvites} friend{(mgr.TotalInvites == 1 ? "" : "s")} invited";
+        if (totalInvitesText != null) totalInvitesText.text = mgr.TotalInvites + (mgr.TotalInvites == 1 ? " friend invited" : " friends invited");
         if (gemsEarnedText  != null) gemsEarnedText.text  = $"{mgr.GemsEarned} gems earned";
         if (rewardInfoText  != null)
             rewardInfoText.text =

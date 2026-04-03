@@ -5,131 +5,97 @@ using TMPro;
 /// <summary>
 /// Settings panel controller.
 ///
-/// Manages:
-///   • Sound on/off
-///   • Music on/off
-///   • Notifications on/off
-///   • Auto-spin speed (Normal / Fast / Max)
-///   • Privacy: clear local data
-///   • Version info display
+/// UIBuilder creates and assigns <see cref="panel"/> at runtime; no Inspector
+/// wiring is needed.  All settings persist via PlayerPrefs.
 ///
-/// All settings persist via PlayerPrefs.
+/// Exposed API used by UIBuilder and LobbyUI:
+///   Show() / Hide() / Toggle()
 /// </summary>
 public class SettingsUI : MonoBehaviour
 {
     public static SettingsUI Instance { get; private set; }
 
-    [Header("Panel")]
+    // ── Inspector-assignable (or set at runtime by UIBuilder) ─────────────────
+    [Header("Panel root — assigned at runtime by UIBuilder if null")]
     public GameObject panel;
 
-    [Header("Toggles")]
+    [Header("Toggles — optional: UIBuilder builds its own if null")]
     public Toggle soundToggle;
     public Toggle musicToggle;
     public Toggle notifToggle;
 
-    [Header("Auto Spin Speed")]
-    public Slider autoSpinSpeedSlider;   // 0=Normal(1s), 1=Fast(0.5s), 2=Max(0.1s)
-    public TMP_Text autoSpinSpeedLabel;
-
-    [Header("Misc")]
+    [Header("Misc — optional")]
     public TMP_Text versionText;
     public Button   clearDataButton;
     public Button   closeButton;
 
-    // ── PlayerPrefs keys ──────────────────────────────────────────────────────
-    private const string KeySound  = "settings_sound";
-    private const string KeyMusic  = "settings_music";
-    private const string KeyNotif  = "settings_notif";
-    private const string KeySpeed  = "settings_autospin_speed";
+    // PlayerPrefs keys
+    private const string KeySound = "settings_sound";
+    private const string KeyMusic = "settings_music";
+    private const string KeyNotif = "settings_notif";
+    private const string KeySpeed = "settings_autospin_speed";
 
-    private static readonly float[] SpeedValues  = { 1.0f, 0.5f, 0.1f };
-    private static readonly string[] SpeedLabels = { "Normal (1 s)", "Fast (0.5 s)", "Max (0.1 s)" };
-
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // Apply persisted sound volume immediately on every scene load.
+        AudioListener.volume = PlayerPrefs.GetInt(KeySound, 1) == 1 ? 1f : 0f;
     }
 
     private void Start()
     {
-        // Load persisted values
-        if (soundToggle  != null)
-        {
-            soundToggle.isOn = PlayerPrefs.GetInt(KeySound, 1) == 1;
-            soundToggle.onValueChanged.AddListener(v => {
-                AudioListener.volume = v ? 1f : 0f;
-                PlayerPrefs.SetInt(KeySound, v ? 1 : 0);
-                PlayerPrefs.Save();
-            });
-        }
-
-        if (musicToggle != null)
-        {
-            musicToggle.isOn = PlayerPrefs.GetInt(KeyMusic, 1) == 1;
-            musicToggle.onValueChanged.AddListener(v => {
-                PlayerPrefs.SetInt(KeyMusic, v ? 1 : 0);
-                PlayerPrefs.Save();
-                // TODO: mute/unmute background music AudioSource
-            });
-        }
-
-        if (notifToggle != null)
-        {
-            notifToggle.isOn = PlayerPrefs.GetInt(KeyNotif, 1) == 1;
-            notifToggle.onValueChanged.AddListener(v => {
-                PlayerPrefs.SetInt(KeyNotif, v ? 1 : 0);
-                PlayerPrefs.Save();
-            });
-        }
-
-        if (autoSpinSpeedSlider != null)
-        {
-            autoSpinSpeedSlider.minValue    = 0;
-            autoSpinSpeedSlider.maxValue    = 2;
-            autoSpinSpeedSlider.wholeNumbers = true;
-            autoSpinSpeedSlider.value       = PlayerPrefs.GetInt(KeySpeed, 0);
-            autoSpinSpeedSlider.onValueChanged.AddListener(v => ApplyAutoSpinSpeed((int)v));
-            ApplyAutoSpinSpeed((int)autoSpinSpeedSlider.value);
-        }
+        // Wire Inspector-assigned toggles if present (non-UIBuilder scenes).
+        WireToggle(soundToggle, KeySound, v => AudioListener.volume = v ? 1f : 0f);
+        WireToggle(musicToggle, KeyMusic, null);
+        WireToggle(notifToggle, KeyNotif, null);
 
         if (versionText != null)
-            versionText.text = $"v{Application.version} | Unity {Application.unityVersion}";
+            versionText.text = "v" + Application.version +
+                               "  |  Unity " + Application.unityVersion;
 
-        clearDataButton?.onClick.AddListener(OnClearData);
+        clearDataButton?.onClick.AddListener(ClearData);
         closeButton?.onClick.AddListener(Hide);
 
-        // Apply sound on start (in case user muted last session)
-        AudioListener.volume = PlayerPrefs.GetInt(KeySound, 1) == 1 ? 1f : 0f;
+        // Hide panel on start (UIBuilder shows it on button press)
+        if (panel != null) panel.SetActive(false);
     }
 
-    // ── Public API ─────────────────────────────────────────────────────────────
-    public void Show() => panel?.SetActive(true);
-    public void Hide() => panel?.SetActive(false);
+    // ── Public API ────────────────────────────────────────────────────────────
+    public void Show()   { if (panel != null) panel.SetActive(true); }
+    public void Hide()   { if (panel != null) panel.SetActive(false); }
     public void Toggle() { if (panel != null) panel.SetActive(!panel.activeSelf); }
 
-    // ── Internal ──────────────────────────────────────────────────────────────
-    private void ApplyAutoSpinSpeed(int index)
+    /// <summary>Apply an auto-spin delay to the active SlotMachine.</summary>
+    public void SetAutoSpinSpeed(float delay)
     {
-        index = Mathf.Clamp(index, 0, 2);
-        PlayerPrefs.SetInt(KeySpeed, index);
-        PlayerPrefs.Save();
-
-        float delay = SpeedValues[index];
         var sm = FindObjectOfType<SlotMachine>();
         if (sm != null) sm.autoSpinDelay = delay;
-
-        if (autoSpinSpeedLabel != null)
-            autoSpinSpeedLabel.text = $"Auto Speed: {SpeedLabels[index]}";
+        PlayerPrefs.SetFloat(KeySpeed, delay);
+        PlayerPrefs.Save();
     }
 
-    private void OnClearData()
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    private static void WireToggle(Toggle toggle, string key, System.Action<bool> extra)
+    {
+        if (toggle == null) return;
+        toggle.isOn = PlayerPrefs.GetInt(key, 1) == 1;
+        toggle.onValueChanged.AddListener(v =>
+        {
+            PlayerPrefs.SetInt(key, v ? 1 : 0);
+            PlayerPrefs.Save();
+            extra?.Invoke(v);
+        });
+    }
+
+    private void ClearData()
     {
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
-        Debug.Log("[Settings] All local data cleared.");
-        // Reload the current scene to reset all singletons.
+        Debug.Log("[SettingsUI] All local data cleared — reloading scene.");
         SceneLoader.Instance?.ReloadCurrent();
     }
 }

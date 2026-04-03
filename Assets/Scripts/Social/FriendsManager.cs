@@ -69,7 +69,7 @@ public class FriendsManager : MonoBehaviour
     {
         string url = $"{BackendClient.BaseUrl}/api/friends";
         using var req = UnityWebRequest.Get(url);
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
+        string _authTok = PlayerPrefs.GetString("auth_token", ""); req.SetRequestHeader("Authorization", "Bearer " + _authTok);
         yield return req.SendWebRequest();
 
         if (req.result == UnityWebRequest.Result.Success)
@@ -92,7 +92,7 @@ public class FriendsManager : MonoBehaviour
         req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type",  "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
+        string _authTok = PlayerPrefs.GetString("auth_token", ""); req.SetRequestHeader("Authorization", "Bearer " + _authTok);
         yield return req.SendWebRequest();
 
         if (req.result == UnityWebRequest.Result.Success)

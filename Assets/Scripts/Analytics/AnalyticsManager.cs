@@ -9,22 +9,30 @@ using UnityEngine.Networking;
 /// Lightweight analytics / event-tracking manager.
 ///
 /// Events are queued locally and flushed to the backend in batches every
-/// <see cref="flushIntervalSeconds"/> seconds, or immediately on app pause/quit.
+/// <see cref="flushIntervalSeconds"/> seconds, or when the app pauses / quits.
 /// All network calls are fire-and-forget — failures are silently swallowed so
 /// analytics never causes a gameplay error.
+///
+/// Wired automatically:
+///   • Session start / end
+///   • Jackpot wins (via ProgressiveJackpot.OnJackpotWon)
+///   • Spin + win events (via SlotMachine.Spin() calling TrackSpin directly)
+///   • Tier-up (via LoyaltySystem.OnTierUp)
+///   • Scene loads (via SceneLoader)
 /// </summary>
 public class AnalyticsManager : MonoBehaviour
 {
     public static AnalyticsManager Instance { get; private set; }
 
     [Header("Flush Settings")]
-    [Tooltip("Seconds between automatic batch flushes.")]
+    [Tooltip("Seconds between automatic batch flushes to backend.")]
     public float flushIntervalSeconds = 30f;
 
     [Header("Debug")]
-    public bool logEvents = false;   // set true in Editor to print events to Console
+    [Tooltip("Print every tracked event to the Unity Console.")]
+    public bool logEvents = false;
 
-    // ── Event types ───────────────────────────────────────────────────────────
+    // ── Event name constants ──────────────────────────────────────────────────
     public static class Event
     {
         public const string SessionStart   = "session_start";
@@ -37,25 +45,28 @@ public class AnalyticsManager : MonoBehaviour
         public const string IAPPurchase    = "iap_purchase";
         public const string SceneLoad      = "scene_load";
         public const string FraudFlag      = "fraud_flag";
+        public const string TierUp         = "tier_up";
+        public const string MilestoneReach = "milestone";
         public const string ErrorCaught    = "error_caught";
     }
 
-    // ── Internal ──────────────────────────────────────────────────────────────
+    // ── Data model ────────────────────────────────────────────────────────────
     [Serializable]
     private class AnalyticsEvent
     {
         public string eventName;
         public string deviceId;
         public string sessionId;
-        public long   timestamp;   // Unix seconds
-        public string payload;     // JSON string of event-specific data
+        public long   timestamp;
+        public string payload;   // compact JSON
     }
 
-    private readonly List<AnalyticsEvent> _queue = new();
+    private readonly List<AnalyticsEvent> _queue = new List<AnalyticsEvent>();
     private string _sessionId;
     private double _sessionStartTime;
     private const int MaxQueueSize = 200;
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -65,67 +76,85 @@ public class AnalyticsManager : MonoBehaviour
         _sessionId        = Guid.NewGuid().ToString("N").Substring(0, 16);
         _sessionStartTime = UtcNow();
 
-        PlayerPrefs.SetInt("analytics_session_count",
-            PlayerPrefs.GetInt("analytics_session_count", 0) + 1);
+        int count = PlayerPrefs.GetInt("analytics_session_count", 0) + 1;
+        PlayerPrefs.SetInt("analytics_session_count", count);
         PlayerPrefs.Save();
     }
 
     private void Start()
     {
-        Track(Event.SessionStart, $"{{"session":"{_sessionId}"," +
-              $""session_count":{PlayerPrefs.GetInt("analytics_session_count",1)}}}");
+        int sessionCount = PlayerPrefs.GetInt("analytics_session_count", 1);
+        Track(Event.SessionStart,
+              "{\"session\":\"" + _sessionId + "\",\"session_count\":" + sessionCount + "}");
 
-        // Wire into slot machine events (no hard reference to SlotMachine needed).
-        ProgressiveJackpot.OnJackpotWon  += OnJackpotWon;
+        // Subscribe to events that Analytics tracks automatically.
+        ProgressiveJackpot.OnJackpotWon += OnJackpotWon;
+        LoyaltySystem.OnTierUp          += OnTierUp;
+        LoyaltySystem.OnMilestoneReached += OnMilestone;
 
         InvokeRepeating(nameof(Flush), flushIntervalSeconds, flushIntervalSeconds);
     }
 
     private void OnDestroy()
     {
-        ProgressiveJackpot.OnJackpotWon -= OnJackpotWon;
+        ProgressiveJackpot.OnJackpotWon  -= OnJackpotWon;
+        LoyaltySystem.OnTierUp           -= OnTierUp;
+        LoyaltySystem.OnMilestoneReached -= OnMilestone;
     }
 
     // ── Public tracking API ───────────────────────────────────────────────────
 
-    /// <summary>Track a named event with optional JSON payload.</summary>
+    /// <summary>Track a named event with an optional JSON payload string.</summary>
     public void Track(string eventName, string jsonPayload = "{}")
     {
-        if (_queue.Count >= MaxQueueSize) _queue.RemoveAt(0);  // drop oldest
+        if (_queue.Count >= MaxQueueSize) _queue.RemoveAt(0);
 
         _queue.Add(new AnalyticsEvent
         {
             eventName = eventName,
-            deviceId  = DeviceTracker.Instance?.DeviceId ?? SystemInfo.deviceUniqueIdentifier,
+            deviceId  = DeviceTracker.Instance != null
+                        ? DeviceTracker.Instance.DeviceId
+                        : SystemInfo.deviceUniqueIdentifier,
             sessionId = _sessionId,
             timestamp = (long)UtcNow(),
             payload   = jsonPayload,
         });
 
         if (logEvents)
-            Debug.Log($"[Analytics] {eventName}: {jsonPayload}");
+            Debug.Log("[Analytics] " + eventName + ": " + jsonPayload);
     }
 
-    /// <summary>Track a spin: bet amount, win amount, jackpot flag.</summary>
+    /// <summary>
+    /// Called by SlotMachine.Spin() / SpinFree() after every spin result.
+    /// </summary>
     public void TrackSpin(long bet, long win, bool isJackpot)
-        => Track(isJackpot ? Event.JackpotWin : (win > 0 ? Event.Win : Event.Spin),
-                 $"{{"bet":{bet},"win":{win},"jackpot":{(isJackpot ? "true" : "false")}}}");
+    {
+        string evtName = isJackpot ? Event.JackpotWin : (win > 0 ? Event.Win : Event.Spin);
+        Track(evtName,
+              "{\"bet\":" + bet +
+              ",\"win\":" + win +
+              ",\"jackpot\":" + (isJackpot ? "true" : "false") + "}");
+    }
 
     // ── Event listeners ───────────────────────────────────────────────────────
     private void OnJackpotWon(ProgressiveJackpot.JackpotTier tier, long amount, string label)
-        => Track(Event.JackpotWin, $"{{"tier":"{label}","amount":{amount}}}");
+        => Track(Event.JackpotWin,
+                 "{\"tier\":\"" + label + "\",\"amount\":" + amount + "}");
 
-    // ── Flush to backend ──────────────────────────────────────────────────────
-    private void OnApplicationPause(bool paused)
-    {
-        if (paused) Flush();
-    }
+    private void OnTierUp(LoyaltySystem.LoyaltyTier tier)
+        => Track(Event.TierUp,
+                 "{\"tier\":\"" + tier + "\"}");
 
+    private void OnMilestone(long coins, int freeSpins, int superSpins)
+        => Track(Event.MilestoneReach,
+                 "{\"coins\":" + coins + ",\"free_spins\":" + freeSpins + "}");
+
+    // ── Flush ─────────────────────────────────────────────────────────────────
+    private void OnApplicationPause(bool paused) { if (paused) Flush(); }
     private void OnApplicationQuit()
     {
-        Track(Event.SessionEnd,
-              $"{{"duration":{(long)(UtcNow() - _sessionStartTime)}}}");
-        // Synchronous flush not possible in Unity, but queue is persisted below.
+        long duration = (long)(UtcNow() - _sessionStartTime);
+        Track(Event.SessionEnd, "{\"duration\":" + duration + "}");
         PersistQueue();
     }
 
@@ -138,14 +167,16 @@ public class AnalyticsManager : MonoBehaviour
 
     private IEnumerator SendBatch(List<AnalyticsEvent> batch)
     {
-        string url  = BackendClient.BaseUrl + "/api/analytics/batch";
+        string url = BackendClient.BaseUrl + "/api/analytics/batch";
         var sb = new StringBuilder("[");
         for (int i = 0; i < batch.Count; i++)
         {
             var e = batch[i];
-            sb.Append($"{{"event":"{e.eventName}","device":"{e.deviceId}"," +
-                      $""session":"{e.sessionId}","ts":{e.timestamp}," +
-                      $""data":{e.payload}}}");
+            sb.Append("{\"event\":\"").Append(e.eventName)
+              .Append("\",\"device\":\"").Append(e.deviceId)
+              .Append("\",\"session\":\"").Append(e.sessionId)
+              .Append("\",\"ts\":").Append(e.timestamp)
+              .Append(",\"data\":").Append(e.payload).Append('}');
             if (i < batch.Count - 1) sb.Append(',');
         }
         sb.Append(']');
@@ -154,7 +185,7 @@ public class AnalyticsManager : MonoBehaviour
         req.uploadHandler   = new UploadHandlerRaw(Encoding.UTF8.GetBytes(sb.ToString()));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        req.SetRequestHeader("Authorization", "Bearer " + BackendClient.AuthToken);
         req.timeout = 10;
         yield return req.SendWebRequest();
         // Silently ignore errors — analytics must never block gameplay.
@@ -162,8 +193,6 @@ public class AnalyticsManager : MonoBehaviour
 
     private void PersistQueue()
     {
-        // Persist unflushed events to PlayerPrefs so they survive app restart.
-        // (Simple approach; for production use a local SQLite or file.)
         if (_queue.Count == 0) return;
         PlayerPrefs.SetInt("analytics_pending", _queue.Count);
         PlayerPrefs.Save();

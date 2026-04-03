@@ -2,6 +2,11 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Slot machine core — drives reels, bet management, payout calculation,
+/// and auto-spin.  Calls FraudPrevention, DailyChallenges, and Analytics
+/// on every spin so all systems stay in sync without extra wiring.
+/// </summary>
 public class SlotMachine : MonoBehaviour
 {
     [Header("Reels")]
@@ -15,13 +20,15 @@ public class SlotMachine : MonoBehaviour
     [Tooltip("Seconds between auto spins")]
     public float autoSpinDelay = 1.0f;
 
-    public event Action<long, bool> OnSpinComplete; // (payout, isJackpot)
-    public event Action<bool> OnAutoSpinChanged;    // (isRunning)
+    public event Action<long, bool> OnSpinComplete;    // (payout, isJackpot)
+    public event Action<bool>       OnAutoSpinChanged; // (isRunning)
 
     public bool IsAutoSpinning { get; private set; }
+    public bool IsSpinning     { get; private set; }   // true while reels resolving
 
     private Coroutine _autoSpinCoroutine;
 
+    // ── Auto-spin ─────────────────────────────────────────────────────────────
     public void StartAutoSpin()
     {
         if (IsAutoSpinning) return;
@@ -34,18 +41,13 @@ public class SlotMachine : MonoBehaviour
     {
         if (!IsAutoSpinning) return;
         IsAutoSpinning = false;
-        if (_autoSpinCoroutine != null)
-        {
-            StopCoroutine(_autoSpinCoroutine);
-            _autoSpinCoroutine = null;
-        }
+        if (_autoSpinCoroutine != null) { StopCoroutine(_autoSpinCoroutine); _autoSpinCoroutine = null; }
         OnAutoSpinChanged?.Invoke(false);
     }
 
     public void ToggleAutoSpin()
     {
-        if (IsAutoSpinning) StopAutoSpin();
-        else StartAutoSpin();
+        if (IsAutoSpinning) StopAutoSpin(); else StartAutoSpin();
     }
 
     private IEnumerator AutoSpinLoop()
@@ -53,10 +55,8 @@ public class SlotMachine : MonoBehaviour
         while (IsAutoSpinning)
         {
             Spin();
-
             yield return new WaitForSeconds(autoSpinDelay);
 
-            // Stop if the player can no longer afford the next spin
             if (PlayerEconomy.Instance == null || PlayerEconomy.Instance.Coins < betAmount)
             {
                 StopAutoSpin();
@@ -65,20 +65,36 @@ public class SlotMachine : MonoBehaviour
         }
     }
 
+    // ── Spin ──────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Execute one spin.  Checks fraud rate limit, deducts bet, evaluates
+    /// jackpot and symbol payouts, then notifies every subsystem.
+    /// </summary>
     public void Spin()
     {
-        if (PlayerEconomy.Instance == null || !PlayerEconomy.Instance.SpendCoins(betAmount))
+        // ── Fraud guard ────────────────────────────────────────────────────────
+        if (FraudPrevention.Instance != null && !FraudPrevention.Instance.AllowSpin())
         {
-            Debug.Log("Not enough coins to spin.");
+            Debug.LogWarning("[SlotMachine] Spin blocked by FraudPrevention.");
             return;
         }
 
-        // Spin reels
+        // ── Balance check ──────────────────────────────────────────────────────
+        if (PlayerEconomy.Instance == null || !PlayerEconomy.Instance.SpendCoins(betAmount))
+        {
+            Debug.Log("[SlotMachine] Not enough coins to spin.");
+            return;
+        }
+
+        // ── Spin reels ─────────────────────────────────────────────────────────
         Symbol[] results = new Symbol[reels.Length];
         for (int i = 0; i < reels.Length; i++)
             results[i] = reels[i].Spin();
 
-        // Evaluate 5-tier jackpot (also contributes bet to all pools internally)
+        // ── Notify DailyChallenges: spin occurred ──────────────────────────────
+        DailyChallenges.Instance?.RecordSpin();
+
+        // ── Progressive jackpot evaluation ────────────────────────────────────
         var (winTier, jackpotPrize) = ProgressiveJackpot.Instance != null
             ? ProgressiveJackpot.Instance.EvaluateSpin(betAmount)
             : ((ProgressiveJackpot.JackpotTier?)null, 0L);
@@ -88,31 +104,83 @@ public class SlotMachine : MonoBehaviour
             jackpotPrize = LoyaltySystem.Instance?.ApplyTierBonus(jackpotPrize) ?? jackpotPrize;
             PlayerEconomy.Instance.AddCoins(jackpotPrize);
             LoyaltySystem.Instance?.RegisterSpin();
+
+            // Notify subsystems
+            DailyChallenges.Instance?.RecordWin(jackpotPrize, betAmount);
+            AnalyticsManager.Instance?.TrackSpin(betAmount, jackpotPrize, isJackpot: true);
+            FraudPrevention.Instance?.ValidateWin(betAmount, jackpotPrize);
+            FraudPrevention.Instance?.ValidateBalance();
+
             OnSpinComplete?.Invoke(jackpotPrize, true);
             return;
         }
+
+        // ── Symbol payout ──────────────────────────────────────────────────────
+        long payout = CalculatePayout(results);
+        float multiplier = PlayerEconomy.Instance.GetActiveMultiplier();
+        payout = (long)(payout * multiplier);
+
+        if (payout > 0)
+        {
+            payout = LoyaltySystem.Instance?.ApplyTierBonus(payout) ?? payout;
+            PlayerEconomy.Instance.AddCoins(payout);
+
+            // DailyChallenges: record win amount and check for big-win multiplier
+            DailyChallenges.Instance?.RecordWin(payout, betAmount);
+        }
+
+        LoyaltySystem.Instance?.RegisterSpin();
+
+        // Notify subsystems
+        AnalyticsManager.Instance?.TrackSpin(betAmount, payout, isJackpot: false);
+        if (payout > 0) FraudPrevention.Instance?.ValidateWin(betAmount, payout);
+        FraudPrevention.Instance?.ValidateBalance();
+
+        OnSpinComplete?.Invoke(payout, false);
+    }
+
+    // ── Free-spin variant (does not deduct coins) ─────────────────────────────
+    public void SpinFree()
+    {
+        if (PlayerEconomy.Instance == null || !PlayerEconomy.Instance.UseFreeSpins(1))
+        {
+            Debug.Log("[SlotMachine] No free spins remaining.");
+            return;
+        }
+
+        // Same fraud / reel logic; DailyChallenges tracks free-spin use
+        if (FraudPrevention.Instance != null && !FraudPrevention.Instance.AllowSpin())
+            return;
+
+        Symbol[] results = new Symbol[reels.Length];
+        for (int i = 0; i < reels.Length; i++)
+            results[i] = reels[i].Spin();
+
+        DailyChallenges.Instance?.RecordSpin();
+        DailyChallenges.Instance?.RecordFreeSpin();
 
         long payout = CalculatePayout(results);
         float multiplier = PlayerEconomy.Instance.GetActiveMultiplier();
         payout = (long)(payout * multiplier);
 
-        // Apply loyalty tier win bonus
         if (payout > 0)
+        {
             payout = LoyaltySystem.Instance?.ApplyTierBonus(payout) ?? payout;
-
-        if (payout > 0)
             PlayerEconomy.Instance.AddCoins(payout);
+            DailyChallenges.Instance?.RecordWin(payout, betAmount);
+        }
 
         LoyaltySystem.Instance?.RegisterSpin();
+        AnalyticsManager.Instance?.TrackSpin(0, payout, isJackpot: false);
         OnSpinComplete?.Invoke(payout, false);
     }
 
+    // ── Payout calculation ────────────────────────────────────────────────────
     private long CalculatePayout(Symbol[] results)
     {
         if (payoutTable == null || results.Length == 0) return 0;
 
-        // Count matches for each symbol
-        System.Collections.Generic.Dictionary<int, int> counts = new System.Collections.Generic.Dictionary<int, int>();
+        var counts = new System.Collections.Generic.Dictionary<int, int>();
         foreach (var sym in results)
         {
             if (sym == null) continue;
@@ -123,21 +191,14 @@ public class SlotMachine : MonoBehaviour
         long best = 0;
         foreach (var kvp in counts)
         {
-            float mult = payoutTable.GetMultiplier(kvp.Key, kvp.Value);
-            long candidate = (long)(betAmount * mult);
+            float mult      = payoutTable.GetMultiplier(kvp.Key, kvp.Value);
+            long  candidate = (long)(betAmount * mult);
             if (candidate > best) best = candidate;
         }
 
-        // Apply active game RTP to enforce house advantage.
-        // Default RTP = 0.70 (3/10 house edge).  Wins are weighted down so that
-        // over many spins the house retains 30 cents of every coin wagered.
+        // Apply game RTP to enforce house edge.
         float rtp = SlotGameLoader.Instance?.ActiveGame?.baseRTP ?? 0.70f;
-
-        // Only scale winning spins — losing spins already contribute to edge.
-        // We use RTP as an expected-value weight: a payout of X has rtp chance
-        // of actually paying out and (1-rtp) chance of returning 0 on that spin.
-        if (best > 0 && UnityEngine.Random.value > rtp)
-            return 0;
+        if (best > 0 && UnityEngine.Random.value > rtp) return 0;
 
         return best;
     }
