@@ -29,7 +29,7 @@ public class ChatManager : MonoBehaviour
 
     public const int MaxHistoryPerChannel = 100;
 
-    private Dictionary<ChatChannel, List<ChatMessage>> _history = new()
+    private Dictionary<ChatChannel, List<ChatMessage>> _history = new Dictionary<ChatChannel, List<ChatMessage>>()
     {
         { ChatChannel.Global,  new List<ChatMessage>() },
         { ChatChannel.Room,    new List<ChatMessage>() },
@@ -127,28 +127,30 @@ public class ChatManager : MonoBehaviour
     {
         string url  = $"{BackendClient.BaseUrl}/api/chat/send";
         string body = JsonUtility.ToJson(msg);
-        using var req = new UnityWebRequest(url, "POST");
-        req.timeout         = 10;
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
-        if (req.result != UnityWebRequest.Result.Success)
-            Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
+                Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+        }
     }
 
     private IEnumerator LoadRecentHistory(ChatChannel channel)
     {
         string url = $"{BackendClient.BaseUrl}/api/chat/history?channel={channel.ToString().ToLower()}&limit=50";
-        using var req = UnityWebRequest.Get(url);
-        req.timeout = 10;
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = UnityWebRequest.Get(url))
         {
-            // Parse array — simplified; use a wrapper class for production
-            Debug.Log($"[ChatManager] History loaded for {channel}");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                // Parse array — simplified; use a wrapper class for production
+                Debug.Log($"[ChatManager] History loaded for {channel}");
+            }
         }
     }
 

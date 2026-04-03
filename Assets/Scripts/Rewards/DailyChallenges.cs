@@ -35,7 +35,7 @@ public class DailyChallenges : MonoBehaviour
         public int           gemReward;
     }
 
-    public List<Challenge> TodayChallenges { get; private set; } = new();
+    public List<Challenge> TodayChallenges { get; private set; } = new List<Challenge>();
 
     public static event Action              OnChallengesRefreshed;
     public static event Action<Challenge>   OnChallengeCompleted;
