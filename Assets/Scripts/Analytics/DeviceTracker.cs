@@ -104,14 +104,28 @@ public class DeviceTracker : MonoBehaviour
 
         Debug.Log("[DeviceTracker] IP=" + IpAddress + " Country=" + Country);
 
-        // Report to analytics using string concatenation (no nested quotes)
-        string payload = "{\"ip\":\"" + IpAddress +
-                         "\",\"country\":\"" + Country +
-                         "\",\"platform\":\"" + Platform +
-                         "\",\"os\":\"" + OperatingSystem +
-                         "\",\"model\":\"" + DeviceModel +
-                         "\",\"screen\":\"" + ScreenRes + "\"}";
+        // Report to analytics using JsonUtility-style safe escaping
+        string payload = JsonEscape(IpAddress, Country, Platform, OperatingSystem, DeviceModel, ScreenRes);
         AnalyticsManager.Instance?.Track("device_info", payload);
+    }
+
+    // Safely builds a JSON object, escaping special characters in each field value
+    private static string JsonEscape(string ip, string country, string platform,
+                                     string os, string model, string screen)
+    {
+        return "{\"ip\":\""       + EscapeJson(ip)       +
+               "\",\"country\":\"" + EscapeJson(country)  +
+               "\",\"platform\":\"" + EscapeJson(platform) +
+               "\",\"os\":\""      + EscapeJson(os)       +
+               "\",\"model\":\""   + EscapeJson(model)    +
+               "\",\"screen\":\""  + EscapeJson(screen)   + "\"}";
+    }
+
+    private static string EscapeJson(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        return s.Replace("\\", "\\\\").Replace("\"", "\\\"")
+                .Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

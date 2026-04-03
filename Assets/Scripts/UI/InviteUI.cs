@@ -83,10 +83,11 @@ public class InviteUI : MonoBehaviour
         var mgr = InviteRewardManager.Instance;
         if (mgr == null) return;
 
-        if (myCodeText      != null) myCodeText.text      = mgr.MyCode;
-        if (totalInvitesText != null) totalInvitesText.text = mgr.TotalInvites + (mgr.TotalInvites == 1 ? " friend invited" : " friends invited");
-        if (gemsEarnedText  != null) gemsEarnedText.text  = $"{mgr.GemsEarned} gems earned";
-        if (rewardInfoText  != null)
+        string friendWord = mgr.TotalInvites == 1 ? "friend" : "friends";
+        if (myCodeText       != null) myCodeText.text       = mgr.MyCode;
+        if (totalInvitesText != null) totalInvitesText.text = $"{mgr.TotalInvites} {friendWord} invited";
+        if (gemsEarnedText   != null) gemsEarnedText.text   = $"{mgr.GemsEarned} gems earned";
+        if (rewardInfoText   != null)
             rewardInfoText.text =
                 $"💎 You earn {mgr.GemRewardPerInvite} gems per friend who joins\n" +
                 $"🎁 Your friend gets {mgr.GemRewardForNew} gems when they enter your code";

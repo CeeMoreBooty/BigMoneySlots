@@ -13,6 +13,7 @@ const SecurityEvent  = require('../models/SecurityEvent');
 const BannedEntity   = require('../models/BannedEntity');
 const security       = require('../services/securityService');
 const webhook        = require('../services/webhookService');
+const discord        = require('../services/discordAdminWebhook');
 const router         = express.Router();
 
 // ── Admin auth guard ──────────────────────────────────────────────────────────
@@ -95,6 +96,10 @@ router.post('/ban', async (req, res) => {
         if (!type || !value) return res.status(400).json({ error: 'type and value required' });
 
         await security.manualBan(type, value, reason || 'Manual admin ban', expiresAt ? new Date(expiresAt) : null);
+
+        // Notify Discord admin channel of the manual ban
+        discord.notifyBan({ type, value, reason: reason || 'Manual admin ban', bannedBy: 'admin' }, 'high').catch(() => {});
+
         res.json({ success: true, type, value });
     } catch (err) {
         res.status(500).json({ error: err.message });

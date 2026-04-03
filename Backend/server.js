@@ -18,9 +18,11 @@ const friendsRoutes        = require('./routes/friends');
 const accountLinkingRoutes = require('./routes/accountLinking');
 const securityRoutes       = require('./routes/security');
 const inviteRoutes         = require('./routes/invite');
+const analyticsRoutes      = require('./routes/analytics');
 
 // ── Services ──────────────────────────────────────────────────────────────────
-const tournamentScheduler  = require('./services/tournamentScheduler');
+const tournamentScheduler    = require('./services/tournamentScheduler');
+const discordAdminWebhook    = require('./services/discordAdminWebhook');
 
 const app    = express();
 const server = http.createServer(app);
@@ -59,6 +61,7 @@ app.use('/api/friends',     friendsRoutes);
 app.use('/api/account',     accountLinkingRoutes);
 app.use('/api/security',    securityRoutes);
 app.use('/api/invite',      inviteRoutes);
+app.use('/api/analytics',  analyticsRoutes);
 
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
@@ -97,4 +100,8 @@ app.use((err, _req, res, _next) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`BigMoneySlots backend running on port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`BigMoneySlots backend running on port ${PORT}`);
+    // Notify Discord admin channel that the server has started
+    discordAdminWebhook.notifyServerStart().catch(() => {});
+});

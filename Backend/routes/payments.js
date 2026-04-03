@@ -4,6 +4,7 @@ const Player      = require('../models/Player');
 const Transaction = require('../models/Transaction');
 const { verifyGooglePlayPurchase } = require('../services/googlePlayVerifier');
 const paypal      = require('../services/paypalService');
+const discord     = require('../services/discordAdminWebhook');
 const router      = express.Router();
 
 // ── In-app product catalog ────────────────────────────────────────────────────
@@ -146,6 +147,15 @@ async function grantProduct(player, productId, product, token, source) {
         verified:      true,
         balanceAfter:  player.coins,
     });
+
+    // Notify Discord admin channel of the purchase (fire-and-forget)
+    discord.notifyPurchase({
+        playerId:  String(player._id),
+        productId,
+        price:     product.price || '?',
+        currency:  product.currency || 'USD',
+        source,
+    }).catch(() => {});
 }
 
 module.exports = router;

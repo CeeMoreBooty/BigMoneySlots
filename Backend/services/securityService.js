@@ -19,6 +19,7 @@
 const SecurityEvent   = require('../models/SecurityEvent');
 const BannedEntity    = require('../models/BannedEntity');
 const webhook         = require('./webhookService');
+const discord         = require('./discordAdminWebhook');
 
 // ── Configurable thresholds (can be moved to .env) ───────────────────────────
 const CFG = {
@@ -189,6 +190,14 @@ async function logEvent(opts) {
             evidence, note,
         }, severity);
 
+        // Forward high/critical events to Discord admin channel
+        if (severity === 'high' || severity === 'critical') {
+            discord.notifyFraud({
+                eventType, severity, autoBanned,
+                ip, playerId, path,
+            }).catch(() => {});
+        }
+
         return event;
     } catch (err) {
         // Never crash the main request because of a security logging error
@@ -207,6 +216,14 @@ async function _autoBan({ ip, playerId, deviceId, reason, io }) {
 
     // Forward ban notification to company webhook
     webhook.send('ban_issued', { ip, playerId, deviceId, reason, bannedBy: 'system' }, 'high');
+
+    // Notify Discord admin channel
+    discord.notifyBan({
+        type: ip ? 'ip' : (playerId ? 'player' : 'device'),
+        value: ip || String(playerId || '') || deviceId || 'N/A',
+        reason,
+        bannedBy: 'system',
+    }, 'high').catch(() => {});
 
     return true;
 }
