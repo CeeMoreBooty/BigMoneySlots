@@ -158,4 +158,86 @@ async function grantProduct(player, productId, product, token, source) {
     }).catch(() => {});
 }
 
+// ── Unity IAP verify (parses Unity receipt JSON, extracts purchase token) ─────
+/**
+ * POST /api/payments/unity-iap/verify
+ * Body: { productId, receipt }
+ *   receipt — the raw receipt JSON string that Unity IAP provides in
+ *             PurchaseEventArgs.purchasedProduct.receipt
+ *
+ * Unity IAP receipt format for Google Play:
+ *   {
+ *     "Store": "GooglePlay",
+ *     "TransactionID": "GPA.xxxx",
+ *     "Payload": "{\"json\":\"{...\\\"purchaseToken\\\":\\\"TOKEN\\\"...}\",\"signature\":\"...\"}"
+ *   }
+ */
+router.post('/unity-iap/verify', auth, async (req, res) => {
+    try {
+        const { productId, receipt } = req.body;
+        if (!productId || !receipt)
+            return res.status(400).json({ error: 'productId and receipt required' });
+
+        const product = PRODUCTS[productId];
+        if (!product) return res.status(400).json({ error: 'Unknown product' });
+
+        // ── Parse Unity IAP receipt ────────────────────────────────────────────
+        let outerReceipt;
+        try { outerReceipt = JSON.parse(receipt); } catch (e) {
+            return res.status(400).json({ error: 'Invalid receipt JSON' });
+        }
+
+        // Editor / dev builds send a "fake" receipt — allow in non-production
+        if (outerReceipt.Store === 'fake' || outerReceipt.Store === 'Editor') {
+            if (process.env.NODE_ENV === 'production')
+                return res.status(400).json({ error: 'Fake receipt rejected in production' });
+
+            await grantProduct(req.player, productId, product, 'editor_sim_' + Date.now(), 'editor');
+            return res.json({ success: true, productId, note: 'editor_simulation' });
+        }
+
+        // Extract the purchase token from the nested Google Play JSON
+        const payload = outerReceipt.Payload;
+        if (!payload) return res.status(400).json({ error: 'Missing Payload in receipt' });
+
+        let payloadObj;
+        try { payloadObj = JSON.parse(payload); } catch (e) {
+            return res.status(400).json({ error: 'Invalid Payload JSON' });
+        }
+
+        const payloadJson = payloadObj.json || payloadObj;
+        let gpData;
+        if (typeof payloadJson === 'string') {
+            try { gpData = JSON.parse(payloadJson); } catch (e) {
+                return res.status(400).json({ error: 'Invalid Google Play JSON in Payload' });
+            }
+        } else {
+            gpData = payloadJson;
+        }
+
+        const purchaseToken = gpData.purchaseToken;
+        if (!purchaseToken)
+            return res.status(400).json({ error: 'purchaseToken not found in receipt' });
+
+        // ── Duplicate check ────────────────────────────────────────────────────
+        const existing = await Transaction.findOne({ purchaseToken });
+        if (existing) return res.status(409).json({ error: 'Purchase already processed' });
+
+        // ── Verify with Google Play ────────────────────────────────────────────
+        const result = await verifyGooglePlayPurchase(
+            process.env.GOOGLE_PLAY_PACKAGE_NAME,
+            productId,
+            purchaseToken
+        );
+        if (!result.valid)
+            return res.status(400).json({ error: 'Google Play verification failed' });
+
+        await grantProduct(req.player, productId, product, purchaseToken, 'google_play');
+        res.json({ success: true, productId });
+    } catch (err) {
+        console.error('[payments/unity-iap]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
