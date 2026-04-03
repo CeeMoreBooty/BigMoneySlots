@@ -74,12 +74,7 @@ public class FriendsManager : MonoBehaviour
     private IEnumerator GetFriends()
     {
         string url = $"{BackendClient.BaseUrl}/api/friends";
-        using var req = UnityWebRequest.Get(url);
-        req.timeout = 10;
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = UnityWebRequest.Get(url))
         {
             req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
             yield return req.SendWebRequest();
@@ -101,15 +96,7 @@ public class FriendsManager : MonoBehaviour
     {
         string url  = $"{BackendClient.BaseUrl}/api/friends/{action}";
         string body = $"{{\"targetPlayerId\":\"{targetPlayerId}\"}}";
-        using var req = new UnityWebRequest(url, "POST");
-        req.timeout         = 10;
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type",  "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = new UnityWebRequest(url, "POST"))
         {
             req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
             req.downloadHandler = new DownloadHandlerBuffer();

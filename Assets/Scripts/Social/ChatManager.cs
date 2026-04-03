@@ -29,12 +29,13 @@ public class ChatManager : MonoBehaviour
 
     public const int MaxHistoryPerChannel = 100;
 
-    private Dictionary<ChatChannel, List<ChatMessage>> _history = new Dictionary<ChatChannel, List<ChatMessage>>()
-    {
-        { ChatChannel.Global,  new List<ChatMessage>() },
-        { ChatChannel.Room,    new List<ChatMessage>() },
-        { ChatChannel.Friends, new List<ChatMessage>() },
-    };
+    private Dictionary<ChatChannel, List<ChatMessage>> _history =
+        new Dictionary<ChatChannel, List<ChatMessage>>()
+        {
+            { ChatChannel.Global,  new List<ChatMessage>() },
+            { ChatChannel.Room,    new List<ChatMessage>() },
+            { ChatChannel.Friends, new List<ChatMessage>() },
+        };
 
     // Active DM target (playerId)
     public string ActiveDMTarget { get; private set; }
@@ -84,7 +85,7 @@ public class ChatManager : MonoBehaviour
             channel    = channel.ToString().ToLower(),
             roomId     = roomId,
             targetId   = targetId ?? ActiveDMTarget,
-            timestamp  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            timestamp  = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds,
         };
 
         // TODO: emit via socket.io: socket.Emit("chat_message", JsonUtility.ToJson(msg));
@@ -95,8 +96,11 @@ public class ChatManager : MonoBehaviour
 
     public void SetDMTarget(string playerId) => ActiveDMTarget = playerId;
 
-    public List<ChatMessage> GetHistory(ChatChannel channel) =>
-        _history.TryGetValue(channel, out var list) ? list : new List<ChatMessage>();
+    public List<ChatMessage> GetHistory(ChatChannel channel)
+    {
+        List<ChatMessage> list;
+        return _history.TryGetValue(channel, out list) ? list : new List<ChatMessage>();
+    }
 
     // ── Called by socket.io callback when a message arrives from server ───────
     public void OnSocketMessageReceived(string json)
@@ -112,12 +116,19 @@ public class ChatManager : MonoBehaviour
             return;
         }
         if (msg == null) return;
-        ChatChannel channel = msg.channel switch
+        ChatChannel channel = ChatChannel.Global;
+        switch (msg.channel)
         {
-            "room"    => ChatChannel.Room,
-            "friends" => ChatChannel.Friends,
-            _         => ChatChannel.Global,
-        };
+            case "room":
+                channel = ChatChannel.Room;
+                break;
+            case "friends":
+                channel = ChatChannel.Friends;
+                break;
+            default:
+                channel = ChatChannel.Global;
+                break;
+        }
         AddToHistory(channel, msg);
         OnMessageReceived?.Invoke(channel, msg);
     }
@@ -127,25 +138,22 @@ public class ChatManager : MonoBehaviour
     {
         string url  = $"{BackendClient.BaseUrl}/api/chat/send";
         string body = JsonUtility.ToJson(msg);
-        using var req = new UnityWebRequest(url, "POST");
-        req.timeout         = 10;
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
-        if (req.result != UnityWebRequest.Result.Success)
-            Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
+                Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+        }
     }
 
     private IEnumerator LoadRecentHistory(ChatChannel channel)
     {
         string url = $"{BackendClient.BaseUrl}/api/chat/history?channel={channel.ToString().ToLower()}&limit=50";
-        using var req = UnityWebRequest.Get(url);
-        req.timeout = 10;
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = UnityWebRequest.Get(url))
         {
             req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
             yield return req.SendWebRequest();
