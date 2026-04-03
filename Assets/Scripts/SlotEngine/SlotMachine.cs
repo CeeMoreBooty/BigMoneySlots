@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SlotMachine : MonoBehaviour
@@ -59,7 +60,7 @@ public class SlotMachine : MonoBehaviour
         if (payoutTable == null || results.Length == 0) return 0;
 
         // Count matches for each symbol
-        System.Collections.Generic.Dictionary<int, int> counts = new System.Collections.Generic.Dictionary<int, int>();
+        Dictionary<int, int> counts = new Dictionary<int, int>();
         foreach (var sym in results)
         {
             if (sym == null) continue;

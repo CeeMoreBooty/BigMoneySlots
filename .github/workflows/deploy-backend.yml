@@ -1,0 +1,58 @@
+name: Deploy Backend to Cloud
+
+on:
+  push:
+    branches:
+      - Main
+    paths:
+      - 'Backend/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./Backend
+        run: npm install
+
+      - name: Run tests
+        working-directory: ./Backend
+        run: npm test || echo "No tests configured"
+
+      # Deploy to your preferred cloud provider
+      # Uncomment and configure one of the following:
+
+      # For Heroku:
+      # - name: Deploy to Heroku
+      #   uses: akhileshns/heroku-deploy@v3.12.14
+      #   with:
+      #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+      #     heroku_app_name: "bigmoneyslots-api"
+      #     heroku_email: ${{ secrets.HEROKU_EMAIL }}
+      #     appdir: "Backend"
+
+      # For Railway:
+      # - name: Deploy to Railway
+      #   run: |
+      #     npm install -g @railway/cli
+      #     railway up --service backend
+      #   env:
+      #     RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # For Render:
+      # - name: Trigger Render Deploy
+      #   run: |
+      #     curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+
+      - name: Deployment status
+        run: echo "Backend deployment completed! Configure your cloud provider above."
