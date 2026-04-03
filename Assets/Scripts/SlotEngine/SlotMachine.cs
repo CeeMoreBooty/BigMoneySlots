@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class SlotMachine : MonoBehaviour
@@ -10,7 +11,59 @@ public class SlotMachine : MonoBehaviour
     public PayoutTable payoutTable;
     public long betAmount = 100;
 
+    [Header("Auto Spin")]
+    [Tooltip("Seconds between auto spins")]
+    public float autoSpinDelay = 1.0f;
+
     public event Action<long, bool> OnSpinComplete; // (payout, isJackpot)
+    public event Action<bool> OnAutoSpinChanged;    // (isRunning)
+
+    public bool IsAutoSpinning { get; private set; }
+
+    private Coroutine _autoSpinCoroutine;
+
+    public void StartAutoSpin()
+    {
+        if (IsAutoSpinning) return;
+        IsAutoSpinning = true;
+        _autoSpinCoroutine = StartCoroutine(AutoSpinLoop());
+        OnAutoSpinChanged?.Invoke(true);
+    }
+
+    public void StopAutoSpin()
+    {
+        if (!IsAutoSpinning) return;
+        IsAutoSpinning = false;
+        if (_autoSpinCoroutine != null)
+        {
+            StopCoroutine(_autoSpinCoroutine);
+            _autoSpinCoroutine = null;
+        }
+        OnAutoSpinChanged?.Invoke(false);
+    }
+
+    public void ToggleAutoSpin()
+    {
+        if (IsAutoSpinning) StopAutoSpin();
+        else StartAutoSpin();
+    }
+
+    private IEnumerator AutoSpinLoop()
+    {
+        while (IsAutoSpinning)
+        {
+            Spin();
+
+            yield return new WaitForSeconds(autoSpinDelay);
+
+            // Stop if the player can no longer afford the next spin
+            if (PlayerEconomy.Instance == null || PlayerEconomy.Instance.Coins < betAmount)
+            {
+                StopAutoSpin();
+                yield break;
+            }
+        }
+    }
 
     public void Spin()
     {

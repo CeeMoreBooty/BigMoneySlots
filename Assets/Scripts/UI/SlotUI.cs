@@ -17,24 +17,35 @@ public class SlotUI : MonoBehaviour
     [Header("Spin Button")]
     public Button spinButton;
 
+    [Header("Auto Spin")]
+    public Button autoSpinButton;
+    public TMP_Text autoSpinButtonText;
+
     [Header("References")]
     public SlotMachine slotMachine;
 
     private void Awake()
     {
         spinButton?.onClick.AddListener(OnSpinClicked);
+        autoSpinButton?.onClick.AddListener(OnAutoSpinClicked);
     }
 
     private void OnEnable()
     {
         if (slotMachine != null)
+        {
             slotMachine.OnSpinComplete += HandleSpinComplete;
+            slotMachine.OnAutoSpinChanged += HandleAutoSpinChanged;
+        }
     }
 
     private void OnDisable()
     {
         if (slotMachine != null)
+        {
             slotMachine.OnSpinComplete -= HandleSpinComplete;
+            slotMachine.OnAutoSpinChanged -= HandleAutoSpinChanged;
+        }
     }
 
     private void Update()
@@ -47,6 +58,11 @@ public class SlotUI : MonoBehaviour
         slotMachine?.Spin();
     }
 
+    private void OnAutoSpinClicked()
+    {
+        slotMachine?.ToggleAutoSpin();
+    }
+
     private void HandleSpinComplete(long payout, bool isJackpot)
     {
         if (isJackpot)
@@ -55,6 +71,17 @@ public class SlotUI : MonoBehaviour
             resultText.text = $"🏆 You won +{FormatCoins(payout)}!";
         else
             resultText.text = "No win. Try again!";
+    }
+
+    private void HandleAutoSpinChanged(bool isRunning)
+    {
+        if (autoSpinButtonText != null)
+            autoSpinButtonText.text = isRunning ? "Stop Auto" : "Auto Spin";
+
+        // Disable the manual spin button while auto-spinning so the player
+        // uses the Auto Spin button to stop instead.
+        if (spinButton != null)
+            spinButton.interactable = !isRunning;
     }
 
     private void RefreshHUD()
