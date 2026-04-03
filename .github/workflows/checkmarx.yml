@@ -1,0 +1,73 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# Checkmarx CxFlow SAST scan.
+# Requires the following repository secrets to be configured:
+#   CHECKMARX_URL            – e.g. https://your-company.checkmarx.net
+#   CHECKMARX_USERNAME       – Checkmarx service-account username
+#   CHECKMARX_PASSWORD       – Checkmarx service-account password
+#   CHECKMARX_CLIENT_SECRET  – Checkmarx OAuth client secret
+#   CHECKMARX_PROJECT        – project name inside Checkmarx
+#   CHECKMARX_TEAMS          – Checkmarx team path (e.g. /CxServer/SP/Company)
+#
+# The job is skipped automatically when CHECKMARX_URL is not set, so the
+# workflow will NOT fail on forks or environments that lack Checkmarx access.
+
+name: CxFlow
+
+on:
+  push:
+    branches: [ "Wiseeeee", "Main", "main", "master" ]
+  pull_request:
+    branches: [ "Wiseeeee", "Main", "main", "master" ]
+  schedule:
+    - cron: '44 18 * * 6'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Checkmarx SAST Scan
+    # Skip if the Checkmarx URL secret is not configured
+    if: ${{ secrets.CHECKMARX_URL != '' }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      security-events: write
+      actions: read
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't fail the PR if Checkmarx is unavailable
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Checkmarx CxFlow Action
+      uses: checkmarx-ts/checkmarx-cxflow-github-action@49d8269b14ca87910ba003d47a31fa0c7a11f2fe
+      with:
+        project: ${{ secrets.CHECKMARX_PROJECT }}
+        team: ${{ secrets.CHECKMARX_TEAMS }}
+        checkmarx_url: ${{ secrets.CHECKMARX_URL }}
+        checkmarx_username: ${{ secrets.CHECKMARX_USERNAME }}
+        checkmarx_password: ${{ secrets.CHECKMARX_PASSWORD }}
+        checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+        scanners: sast
+        params: >-
+          --namespace=${{ github.repository_owner }}
+          --repo-name=${{ github.event.repository.name }}
+          --branch=${{ github.ref }}
+          --cx-project=${{ secrets.CHECKMARX_PROJECT }}
+          --cx-flow.filter-severity
+          --cx-flow.filter-category
+          --checkmarx.disable-clubbing=true
+          --repo-url=${{ github.event.repository.url }}
+
+    - name: Upload SARIF file
+      if: always()
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: cx.sarif
+      continue-on-error: true
