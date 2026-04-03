@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple bulldozer silhouette used as the adaptive-icon foreground. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Blade -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M18,66 L18,54 L30,44 L34,66 Z" />
+
+    <!-- Cab + body -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M32,44 L32,36 L58,36 L58,44 L82,56 L82,66 L32,66 Z" />
+
+    <!-- Tracks -->
+    <path
+        android:fillColor="#CC9900"
+        android:pathData="M28,66 L28,72 L86,72 L86,66 Z" />
+
+    <!-- Left wheel -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M34,72 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+
+    <!-- Right wheel -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M73,72 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+
+    <!-- Exhaust stack -->
+    <path
+        android:fillColor="#CC9900"
+        android:pathData="M60,36 L60,28 L65,28 L65,36 Z" />
+
+</vector>

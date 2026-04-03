@@ -1,0 +1,195 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100300001
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100300002}
+  - component: {fileID: 100300003}
+  m_Layer: 5
+  m_Name: PaylineRow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_IsActive: 1
+--- !u!224 &100300002
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100300001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 100300010}
+  - {fileID: 100300020}
+  - {fileID: 100300030}
+  - {fileID: 100300040}
+  - {fileID: 100300050}
+  m_Father: {fileID: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 960, y: 80}
+  m_Pivot: {x: 0, y: 0.5}
+--- !u!222 &100300003
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!1 &100300009
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100300010}
+  - component: {fileID: 100300011}
+  - component: {fileID: 100300012}
+  m_Layer: 5
+  m_Name: SymbolIcon
+  m_IsActive: 1
+--- !u!224 &100300010
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100300002}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0.1}
+  m_AnchorMax: {x: 0, y: 0.9}
+  m_AnchoredPosition: {x: 40, y: 0}
+  m_SizeDelta: {x: 64, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100300011
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100300012
+MonoBehaviour:
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+--- !u!1 &100300019
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100300020}
+  - component: {fileID: 100300021}
+  - component: {fileID: 100300022}
+  m_Layer: 5
+  m_Name: SymbolNameText
+  m_IsActive: 1
+--- !u!224 &100300020
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100300002}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.1, y: 0}
+  m_AnchorMax: {x: 0.35, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0.5}
+--- !u!222 &100300021
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100300022
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: f4688fdb7825415993f64536399f3a6d, type: 0}
+  m_text: Seven
+  m_fontSize: 28
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 512
+--- !u!1 &100300029
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100300030}
+  - component: {fileID: 100300031}
+  - component: {fileID: 100300032}
+  m_Layer: 5
+  m_Name: x3Text
+  m_IsActive: 1
+--- !u!224 &100300030
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100300002}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.36, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100300031
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100300032
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: f4688fdb7825415993f64536399f3a6d, type: 0}
+  m_text: x3
+  m_fontSize: 26
+  m_fontColor: {r: 1, g: 0.84, b: 0, a: 1}
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+--- !u!1 &100300039
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100300040}
+  - component: {fileID: 100300041}
+  - component: {fileID: 100300042}
+  m_Layer: 5
+  m_Name: x4Text
+  m_IsActive: 1
+--- !u!224 &100300040
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100300002}
+  m_RootOrder: 3
+  m_AnchorMin: {x: 0.51, y: 0}
+  m_AnchorMax: {x: 0.65, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100300041
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100300042
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: f4688fdb7825415993f64536399f3a6d, type: 0}
+  m_text: x4
+  m_fontSize: 26
+  m_fontColor: {r: 1, g: 0.84, b: 0, a: 1}
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+--- !u!1 &100300049
+GameObject:
+  m_ObjectHideFlags: 0
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100300050}
+  - component: {fileID: 100300051}
+  - component: {fileID: 100300052}
+  m_Layer: 5
+  m_Name: x5Text
+  m_IsActive: 1
+--- !u!224 &100300050
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_Father: {fileID: 100300002}
+  m_RootOrder: 4
+  m_AnchorMin: {x: 0.66, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &100300051
+CanvasRenderer:
+  m_CullTransparentMesh: 1
+--- !u!114 &100300052
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: f4688fdb7825415993f64536399f3a6d, type: 0}
+  m_text: x7
+  m_fontSize: 26
+  m_fontColor: {r: 1, g: 0.6, b: 0, a: 1}
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512

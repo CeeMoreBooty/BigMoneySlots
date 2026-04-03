@@ -1,0 +1,17 @@
+# fastlane/play-store-key.json
+#
+# This file is a placeholder. The real service-account JSON key must NEVER be
+# committed to source control.
+#
+# ── How to generate it ────────────────────────────────────────────────────────
+# 1. Open Google Play Console → Setup → API access
+# 2. Link to (or create) a Google Cloud project
+# 3. Create a service account with the role "Release Manager"
+# 4. Download the JSON key and save it here as play-store-key.json
+#    (this .gitignore entry already excludes it)
+# 5. Or set the PLAY_STORE_JSON_KEY environment variable to its path
+#
+# Fastlane docs: https://docs.fastlane.tools/getting-started/android/setup/
+#
+# ⚠️  play-store-key.json is listed in .gitignore — the real file will NOT be
+#      committed even if you place it here.

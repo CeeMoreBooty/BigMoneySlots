@@ -1,0 +1,33 @@
+# Unity project files (not needed for backend deployment)
+Assets/
+ProjectSettings/
+Packages/
+Library/
+Temp/
+Logs/
+UserSettings/
+*.meta
+*.unity
+
+# Documentation
+Docs/
+GooglePlay/
+*.md
+!RAILWAY_DEPLOYMENT.md
+!RAILWAY_QUICKSTART.md
+
+# GitHub workflows
+.github/
+
+# Local development
+.env
+.env.local
+*.log
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Keep only Backend for Railway deployment
+!Backend/
