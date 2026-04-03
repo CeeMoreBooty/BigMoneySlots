@@ -82,7 +82,7 @@ Should return: `{"status":"ok","time":"..."}`
 | Bundle Version Code | Increment for each upload |
 | Scripting Backend | IL2CPP |
 | Target Architectures | ARM64 ✅ |
-| Minimum API Level | 22 (Android 5.1) |
+| Minimum API Level | 23 (Android 6.0) |
 | Target API Level | 33 (Android 13) |
 | Internet Permission | Required ✅ |
 | Keystore | Configured ✅ |

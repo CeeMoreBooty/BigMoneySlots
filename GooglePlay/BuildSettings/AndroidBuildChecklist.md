@@ -3,7 +3,7 @@
 ## Unity Player Settings (Edit > Project Settings > Player > Android)
 
 ### Identity
-- [ ] Package Name: `com.yourstudio.bigmoneyslots`
+- [ ] Package Name: `com.ceemorebooty.bigmoneyslots`
 - [ ] Version: `1.0`
 - [ ] Bundle Version Code: `1`
 

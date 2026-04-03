@@ -50,13 +50,20 @@
 
 ## Step 6 — In-App Products
 - [ ] Go to **Monetize > In-app products**
-- [ ] Click **Create product**
-  - Product ID: `welcomeofferpack`
-  - Name: `Welcome Offer Pack`
-  - Description: `150B coins, 200 free spins, VIP badge, golden reel skin & more!`
-  - Price: set per region (e.g., $4.99 USD)
-  - Status: **Active**
-- [ ] Save
+- [ ] Click **Create product** for each item below and set Status to **Active**:
+
+  | Product ID | Type | Name | Price |
+  |---|---|---|---|
+  | `welcomeofferpack` | Non-consumable | Welcome Offer Pack | $4.99 |
+  | `gems_100` | Consumable | 100 Gems | $0.99 |
+  | `gems_500` | Consumable | 500 Gems | $4.99 |
+  | `gems_1200` | Consumable | 1,200 Gems | $9.99 |
+  | `gems_2500` | Consumable | 2,500 Gems | $19.99 |
+  | `gems_6500` | Consumable | 6,500 Gems | $49.99 |
+
+  > **Important:** Product IDs must match exactly — the backend `PRODUCTS` map in `Backend/routes/payments.js` validates every purchase against these IDs.
+
+- [ ] Save all products
 
 ---
 
