@@ -46,7 +46,7 @@ public class GemSystem : MonoBehaviour
 
     public bool SpendGems(int amount)
     {
-        if (Gems < amount) return false;
+        if (amount <= 0 || Gems < amount) return false;
         Gems -= amount;
         Save();
         OnGemsChanged?.Invoke(Gems);

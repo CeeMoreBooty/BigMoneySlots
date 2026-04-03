@@ -96,9 +96,9 @@ router.post('/redeem', auth, async (req, res) => {
         if (alreadyRedeemed)
             return res.status(409).json({ error: 'You have already redeemed an invite code' });
 
-        // ── Grant gems to the new player (redeemer) ───────────────────────────
+        // ── Grant gems to the new player (redeemer) — atomic to prevent races ──
+        await Player.findByIdAndUpdate(req.player._id, { $inc: { gems: REDEEMER_GEM_REWARD } });
         req.player.gems = (req.player.gems || 0) + REDEEMER_GEM_REWARD;
-        await req.player.save();
 
         await Transaction.create({
             playerId:    req.player._id,
@@ -109,11 +109,11 @@ router.post('/redeem', auth, async (req, res) => {
             balanceAfter: req.player.coins,
         });
 
-        // ── Grant gems to the inviter ─────────────────────────────────────────
+        // ── Grant gems to the inviter — atomic to prevent races ──────────────
         const inviter = await Player.findById(invite.inviterId);
         if (inviter) {
+            await Player.findByIdAndUpdate(inviter._id, { $inc: { gems: INVITER_GEM_REWARD } });
             inviter.gems = (inviter.gems || 0) + INVITER_GEM_REWARD;
-            await inviter.save();
 
             await Transaction.create({
                 playerId:    inviter._id,

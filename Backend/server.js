@@ -24,7 +24,16 @@ const tournamentScheduler  = require('./services/tournamentScheduler');
 
 const app    = express();
 const server = http.createServer(app);
-const io     = new Server(server, { cors: { origin: '*' } });
+
+// CORS: restrict to the configured frontend origin (default to localhost for dev)
+const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+const io     = new Server(server, { cors: { origin: allowedOrigin, methods: ['GET', 'POST'] } });
+
+// ── Startup validation ────────────────────────────────────────────────────────
+if (!process.env.JWT_SECRET) {
+    console.error('[server] FATAL: JWT_SECRET environment variable is not set. Exiting.');
+    process.exit(1);
+}
 
 // ── DB ────────────────────────────────────────────────────────────────────────
 connectDB().then(() => tournamentScheduler.start());
@@ -33,7 +42,7 @@ connectDB().then(() => tournamentScheduler.start());
 setIo(io);
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));  // serves stripe-checkout.html
 
 // Rate limit applied BEFORE security middleware to prevent DB flooding

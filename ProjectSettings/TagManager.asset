@@ -13,30 +13,30 @@ TagManager:
   - UI
   -
   -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
-  -
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
+  - Default
   m_SortingLayers:
   - name: Default
     uniqueID: 0

@@ -58,6 +58,73 @@ router.post('/send', auth, async (req, res) => {
 });
 
 /**
+ * GET /api/chat/dm/threads
+ * Returns one entry per friend the player has exchanged messages with,
+ * showing the latest message and the friend's info.
+ */
+router.get('/dm/threads', auth, async (req, res) => {
+    try {
+        const myId = req.player._id;
+        // Aggregate: for each unique "other party" find the most recent message
+        const threads = await ChatMessage.aggregate([
+            {
+                $match: {
+                    channel: 'friends',
+                    deleted: false,
+                    $or: [{ senderId: myId }, { targetId: myId }],
+                },
+            },
+            { $sort: { createdAt: -1 } },
+            {
+                $group: {
+                    _id: {
+                        $cond: [
+                            { $eq: ['$senderId', myId] },
+                            '$targetId',
+                            '$senderId',
+                        ],
+                    },
+                    latestText:      { $first: '$text' },
+                    latestSenderId:  { $first: '$senderId' },
+                    latestSenderName:{ $first: '$senderName' },
+                    createdAt:       { $first: '$createdAt' },
+                },
+            },
+            { $sort: { createdAt: -1 } },
+        ]);
+        res.json({ threads });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/chat/dm/thread/:friendId?limit=50
+ * Returns the full conversation between the authenticated player and friendId.
+ */
+router.get('/dm/thread/:friendId', auth, async (req, res) => {
+    try {
+        const myId     = req.player._id;
+        const friendId = req.params.friendId;
+        const limit    = Math.min(200, parseInt(req.query.limit) || 50);
+        const messages = await ChatMessage.find({
+            channel: 'friends',
+            deleted: false,
+            $or: [
+                { senderId: myId,     targetId: friendId },
+                { senderId: friendId, targetId: myId     },
+            ],
+        })
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .lean();
+        res.json({ messages: messages.reverse() });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * POST /api/chat/voice/join  — signal backend that player joined voice room
  */
 router.post('/voice/join', auth, async (req, res) => {

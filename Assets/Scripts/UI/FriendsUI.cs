@@ -81,22 +81,27 @@ public class FriendsUI : MonoBehaviour
             var status = row.transform.Find("StatusText")?.GetComponent<TMP_Text>();
             var acceptBtn = row.transform.Find("AcceptButton")?.GetComponent<Button>();
             var removeBtn = row.transform.Find("RemoveButton")?.GetComponent<Button>();
+            var dmBtn     = row.transform.Find("DMButton")?.GetComponent<Button>();
 
             if (name   != null) name.text   = f.displayName;
             if (status != null) status.text = f.isOnline ? "🟢 Online" : "⚫ Offline";
 
-            string id = f.playerId;
+            string id       = f.playerId;
+            string dName    = f.displayName;
             if (isPending)
             {
                 acceptBtn?.gameObject.SetActive(true);
                 removeBtn?.gameObject.SetActive(true);
+                dmBtn?.gameObject.SetActive(false);
                 acceptBtn?.onClick.AddListener(() => { FriendsManager.Instance?.AcceptFriendRequest(id); });
                 removeBtn?.onClick.AddListener(() => { FriendsManager.Instance?.DeclineFriendRequest(id); });
             }
             else
             {
                 acceptBtn?.gameObject.SetActive(false);
+                dmBtn?.gameObject.SetActive(true);
                 removeBtn?.onClick.AddListener(() => { FriendsManager.Instance?.RemoveFriend(id); });
+                dmBtn?.onClick.AddListener(() => { DirectMessageUI.Instance?.OpenThread(id, dName); });
             }
         }
     }

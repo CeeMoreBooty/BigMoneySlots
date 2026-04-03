@@ -57,7 +57,14 @@ public class InviteRewardManager : MonoBehaviour
             OnRedeemFailed?.Invoke("Please enter an invite code.");
             return;
         }
-        StartCoroutine(PostRedeem(code.Trim().ToUpper()));
+        string normalised = code.Trim().ToUpper();
+        // Expected format: BMS followed by exactly 8 uppercase hex characters
+        if (!System.Text.RegularExpressions.Regex.IsMatch(normalised, @"^BMS[0-9A-F]{8}$"))
+        {
+            OnRedeemFailed?.Invoke("Invalid invite code format.");
+            return;
+        }
+        StartCoroutine(PostRedeem(normalised));
     }
 
     // ── REST calls ────────────────────────────────────────────────────────────
@@ -66,6 +73,7 @@ public class InviteRewardManager : MonoBehaviour
     {
         string url = $"{BackendClient.BaseUrl}/api/invite/code";
         using var req = UnityWebRequest.Get(url);
+        req.timeout = 10;
         req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
         yield return req.SendWebRequest();
 
@@ -90,6 +98,7 @@ public class InviteRewardManager : MonoBehaviour
         string url  = $"{BackendClient.BaseUrl}/api/invite/redeem";
         string body = $"{{\"code\":\"{code}\"}}";
         using var req = new UnityWebRequest(url, "POST");
+        req.timeout         = 10;
         req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type",  "application/json");
