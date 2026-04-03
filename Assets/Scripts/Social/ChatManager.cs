@@ -1,0 +1,155 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Networking;
+
+/// <summary>
+/// Manages text chat over a WebSocket connection (socket.io-compatible).
+/// Supports three channels: Global, Room (current game), and Friends DM.
+/// Connects to the backend socket.io server at BackendClient.BaseUrl.
+/// </summary>
+public class ChatManager : MonoBehaviour
+{
+    public static ChatManager Instance { get; private set; }
+
+    public enum ChatChannel { Global, Room, Friends }
+
+    [Serializable]
+    public class ChatMessage
+    {
+        public string   senderId;
+        public string   senderName;
+        public string   text;
+        public string   channel;
+        public string   roomId;       // only for Room channel
+        public string   targetId;     // only for Friends DM
+        public long     timestamp;
+    }
+
+    public const int MaxHistoryPerChannel = 100;
+
+    private Dictionary<ChatChannel, List<ChatMessage>> _history = new()
+    {
+        { ChatChannel.Global,  new List<ChatMessage>() },
+        { ChatChannel.Room,    new List<ChatMessage>() },
+        { ChatChannel.Friends, new List<ChatMessage>() },
+    };
+
+    // Active DM target (playerId)
+    public string ActiveDMTarget { get; private set; }
+
+    public static event Action<ChatChannel, ChatMessage> OnMessageReceived;
+    public static event Action<string>                   OnConnectionError;
+    public static event Action                           OnConnected;
+
+    private bool _connected;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start() => Connect();
+
+    // ── Connection ────────────────────────────────────────────────────────────
+    public void Connect()
+    {
+        // NOTE: Unity does not include a socket.io client by default.
+        // Recommended package: "socket.io-client-csharp" (NuGet / Unity Package).
+        // Wire up the socket events (OnAny, On("chat_message"), etc.) here once
+        // the package is imported. The stubs below show the intended integration.
+        Debug.Log("[ChatManager] Connecting to chat server…");
+        StartCoroutine(LoadRecentHistory(ChatChannel.Global));
+        _connected = true;
+        OnConnected?.Invoke();
+    }
+
+    // ── Send message ─────────────────────────────────────────────────────────
+    public void SendMessage(ChatChannel channel, string text, string roomId = null, string targetId = null)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        text = SanitizeText(text);
+
+        var msg = new ChatMessage
+        {
+            senderId   = PlayerPrefs.GetString("player_id", "local"),
+            senderName = PlayerPrefs.GetString("player_name", "Guardian"),
+            text       = text,
+            channel    = channel.ToString().ToLower(),
+            roomId     = roomId,
+            targetId   = targetId ?? ActiveDMTarget,
+            timestamp  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+        };
+
+        // TODO: emit via socket.io: socket.Emit("chat_message", JsonUtility.ToJson(msg));
+        // For now fall back to REST POST
+        StartCoroutine(PostMessage(msg));
+        AddToHistory(channel, msg);
+    }
+
+    public void SetDMTarget(string playerId) => ActiveDMTarget = playerId;
+
+    public List<ChatMessage> GetHistory(ChatChannel channel) =>
+        _history.TryGetValue(channel, out var list) ? list : new List<ChatMessage>();
+
+    // ── Called by socket.io callback when a message arrives from server ───────
+    public void OnSocketMessageReceived(string json)
+    {
+        var msg = JsonUtility.FromJson<ChatMessage>(json);
+        if (msg == null) return;
+        ChatChannel channel = msg.channel switch
+        {
+            "room"    => ChatChannel.Room,
+            "friends" => ChatChannel.Friends,
+            _         => ChatChannel.Global,
+        };
+        AddToHistory(channel, msg);
+        OnMessageReceived?.Invoke(channel, msg);
+    }
+
+    // ── REST fallback ─────────────────────────────────────────────────────────
+    private IEnumerator PostMessage(ChatMessage msg)
+    {
+        string url  = $"{BackendClient.BaseUrl}/api/chat/send";
+        string body = JsonUtility.ToJson(msg);
+        using var req = new UnityWebRequest(url, "POST");
+        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        yield return req.SendWebRequest();
+        if (req.result != UnityWebRequest.Result.Success)
+            Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+    }
+
+    private IEnumerator LoadRecentHistory(ChatChannel channel)
+    {
+        string url = $"{BackendClient.BaseUrl}/api/chat/history?channel={channel.ToString().ToLower()}&limit=50";
+        using var req = UnityWebRequest.Get(url);
+        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+        {
+            // Parse array — simplified; use a wrapper class for production
+            Debug.Log($"[ChatManager] History loaded for {channel}");
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    private void AddToHistory(ChatChannel channel, ChatMessage msg)
+    {
+        var list = _history[channel];
+        list.Add(msg);
+        if (list.Count > MaxHistoryPerChannel) list.RemoveAt(0);
+    }
+
+    private static string SanitizeText(string text)
+    {
+        // Strip HTML tags and trim; profanity filter can be added here
+        text = System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", "");
+        return text.Trim().Substring(0, Math.Min(text.Trim().Length, 200));
+    }
+}
