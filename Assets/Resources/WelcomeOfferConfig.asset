@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33006677c92e32eb2add678f5b2a428c, type: 3}
+  m_Name: WelcomeOfferConfig
+  m_EditorClassIdentifier: 
+  coins: 150000000000
+  freeSpins: 200
+  superSpins: 25
+  ultraSpins: 1
+  jackpotTickets: 10
+  winBoostMultiplier: 2
+  winBoostDurationHours: 24
+  badgeId: welcome_badge
+  reelSkinId: welcome_skin
+  iapProductId: welcomeofferpack
+  offerDurationHours: 72
+  displayTitle: Welcome Offer!
+  displayDescription: "150B coins, 200 free spins, and a 2x win boost for 24 hours!"
+  displayPrice: $4.99
