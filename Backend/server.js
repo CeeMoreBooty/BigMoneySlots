@@ -1,3 +1,8 @@
+/**
+ * BigMoneySlots Backend Server
+ * Copyright (c) 2024–2026 PGCN (Pretty Good Casino Network). All rights reserved.
+ */
+
 require('dotenv').config();
 const express    = require('express');
 const http       = require('http');
@@ -7,6 +12,7 @@ const rateLimit  = require('express-rate-limit');
 const connectDB  = require('./config/db');
 const ipLogger   = require('./middleware/ipLogger');
 const { securityGuard, setIo } = require('./middleware/securityGuard');
+const discord    = require('./services/discordAdminWebhook');
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 const authRoutes           = require('./routes/auth');
@@ -27,7 +33,16 @@ const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 
 // ── DB ────────────────────────────────────────────────────────────────────────
-connectDB().then(() => tournamentScheduler.start());
+connectDB().then(() => {
+    tournamentScheduler.start();
+    discord.serverEvent('BigMoneySlots Backend Connected', {
+        'Database': 'MongoDB connected',
+        'Port':     process.env.PORT || 3000,
+        'Env':      process.env.NODE_ENV || 'development',
+    });
+}).catch(err => {
+    discord.error('Database Connection Failed', { message: err.message });
+});
 
 // ── Inject socket.io into security guard (for admin alerts) ──────────────────
 setIo(io);
@@ -92,9 +107,17 @@ io.on('connection', socket => {
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
     console.error('[server error]', err.stack);
+    discord.error('Unhandled Server Error', { message: err.message, stack: err.stack?.slice(0, 800) });
     res.status(500).json({ error: 'Internal server error' });
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`BigMoneySlots backend running on port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`BigMoneySlots backend running on port ${PORT}`);
+    discord.serverEvent('🚀 BigMoneySlots Server Started', {
+        Port:     PORT,
+        Platform: 'Android / Google Play',
+        Version:  process.env.npm_package_version || '1.0.0',
+    });
+});

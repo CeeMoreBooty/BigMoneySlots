@@ -2,6 +2,7 @@ const express  = require('express');
 const jwt      = require('jsonwebtoken');
 const Player   = require('../models/Player');
 const auth     = require('../middleware/auth');
+const discord  = require('../services/discordAdminWebhook');
 const router   = express.Router();
 
 // ── Register / Login (device-ID based) ───────────────────────────────────────
@@ -24,6 +25,9 @@ router.post('/register', async (req, res) => {
 
         player = new Player({ deviceId, displayName: displayName || 'Guardian' });
         await player.save();
+
+        // Notify Discord of new registration
+        discord.newPlayer(String(player._id), player.displayName, 'Android');
 
         const token = signToken(player._id);
         res.status(201).json({ token, playerId: player._id, isNew: true });

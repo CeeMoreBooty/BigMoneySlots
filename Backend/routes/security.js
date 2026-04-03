@@ -13,6 +13,7 @@ const SecurityEvent  = require('../models/SecurityEvent');
 const BannedEntity   = require('../models/BannedEntity');
 const security       = require('../services/securityService');
 const webhook        = require('../services/webhookService');
+const discord        = require('../services/discordAdminWebhook');
 const router         = express.Router();
 
 // ── Admin auth guard ──────────────────────────────────────────────────────────
@@ -95,6 +96,10 @@ router.post('/ban', async (req, res) => {
         if (!type || !value) return res.status(400).json({ error: 'type and value required' });
 
         await security.manualBan(type, value, reason || 'Manual admin ban', expiresAt ? new Date(expiresAt) : null);
+
+        // Notify Discord
+        discord.ban(type, value, reason || 'Manual admin ban', 'admin');
+
         res.json({ success: true, type, value });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -150,6 +155,35 @@ router.post('/webhook/test', async (_req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// ── POST /api/security/discord/test ──────────────────────────────────────────
+// Sends a test ping to the Discord admin webhook to verify it is reachable.
+router.post('/discord/test', async (_req, res) => {
+    try {
+        const result = await discord.testWebhook();
+        if (result.ok) {
+            res.json({ success: true, message: 'Discord webhook test sent successfully.' });
+        } else {
+            res.status(502).json({ success: false, error: result.error });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── GET /api/security/discord/status ─────────────────────────────────────────
+// Returns whether the Discord webhook is enabled and configured.
+router.get('/discord/status', (_req, res) => {
+    const url = process.env.ADMIN_DISCORD_WEBHOOK_URL || '';
+    const masked = url.length > 30
+        ? url.slice(0, 38) + '***' + url.slice(-4)
+        : url ? '(configured)' : '(not set)';
+    res.json({
+        enabled:     process.env.ADMIN_DISCORD_WEBHOOK_ENABLED === 'true',
+        url:         masked,
+        minSeverity: process.env.ADMIN_DISCORD_MIN_SEVERITY || 'medium',
+    });
 });
 
 module.exports = router;
