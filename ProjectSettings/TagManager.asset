@@ -8,36 +8,36 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  -
+  - 
   - Water
   - UI
-  -
-  -
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
-  - Default
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   m_SortingLayers:
-  - name: Default
-    uniqueID: 0
+  - uniqueID: 0
+    name: Default
     locked: 0
