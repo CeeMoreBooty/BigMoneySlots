@@ -13,6 +13,7 @@ public class PlayerEconomy : MonoBehaviour
     // Cosmetics
     public string BadgeId { get; private set; }
     public string ReelSkinId { get; private set; }
+    public string ProfileImageUrl { get; private set; }
 
     // Boost
     public float WinMultiplier { get; private set; } = 1f;
@@ -26,6 +27,7 @@ public class PlayerEconomy : MonoBehaviour
     private const string KeyUltraSpins  = "eco_ultra_spins";
     private const string KeyBadge       = "eco_badge";
     private const string KeyReelSkin    = "eco_reel_skin";
+    private const string KeyProfileImg  = "eco_profile_img";
     private const string KeyMultiplier  = "eco_win_mult";
     private const string KeyBoostExpiry = "eco_boost_expiry";
 
@@ -50,6 +52,7 @@ public class PlayerEconomy : MonoBehaviour
     // --- Cosmetics ---
     public void SetBadge(string id)        { BadgeId = id;     Save(); }
     public void SetReelSkin(string id)     { ReelSkinId = id;  Save(); }
+    public void SetProfileImage(string url) { ProfileImageUrl = url; Save(); }
 
     // --- Boost ---
     public void ApplyWinBoost(float multiplier, double durationSeconds)
@@ -75,6 +78,7 @@ public class PlayerEconomy : MonoBehaviour
         PlayerPrefs.SetInt(KeyUltraSpins,    UltraSpins);
         PlayerPrefs.SetString(KeyBadge,      BadgeId ?? "");
         PlayerPrefs.SetString(KeyReelSkin,   ReelSkinId ?? "");
+        PlayerPrefs.SetString(KeyProfileImg, ProfileImageUrl ?? "");
         PlayerPrefs.SetFloat(KeyMultiplier,  WinMultiplier);
         PlayerPrefs.SetString(KeyBoostExpiry, _boostExpiryTime.ToString());
         PlayerPrefs.Save();
@@ -90,6 +94,7 @@ public class PlayerEconomy : MonoBehaviour
         UltraSpins   = PlayerPrefs.GetInt(KeyUltraSpins, 0);
         BadgeId      = PlayerPrefs.GetString(KeyBadge, "");
         ReelSkinId   = PlayerPrefs.GetString(KeyReelSkin, "");
+        ProfileImageUrl = PlayerPrefs.GetString(KeyProfileImg, "");
         WinMultiplier = PlayerPrefs.GetFloat(KeyMultiplier, 1f);
         _boostExpiryTime = double.TryParse(PlayerPrefs.GetString(KeyBoostExpiry, "0"), out double exp) ? exp : 0;
     }

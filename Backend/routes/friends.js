@@ -14,19 +14,27 @@ router.get('/', auth, async (req, res) => {
         const accepted = await Friendship.find({
             status: 'accepted',
             $or: [{ requester: id }, { recipient: id }],
-        }).populate('requester recipient', 'displayName');
+        }).populate('requester recipient', 'displayName profileImageUrl');
 
         const pending = await Friendship.find({
             recipient: id, status: 'pending'
-        }).populate('requester', 'displayName');
+        }).populate('requester', 'displayName profileImageUrl');
 
         const friends = accepted.map(f => {
             const other = f.requester._id.equals(id) ? f.recipient : f.requester;
-            return { playerId: other._id, displayName: other.displayName, isOnline: false };
+            return {
+                playerId: other._id,
+                displayName: other.displayName,
+                profileImageUrl: other.profileImageUrl || '',
+                isOnline: false
+            };
         });
 
         const pendingList = pending.map(f => ({
-            playerId: f.requester._id, displayName: f.requester.displayName, isPending: true
+            playerId: f.requester._id,
+            displayName: f.requester.displayName,
+            profileImageUrl: f.requester.profileImageUrl || '',
+            isPending: true
         }));
 
         res.json({ friends, pending: pendingList });

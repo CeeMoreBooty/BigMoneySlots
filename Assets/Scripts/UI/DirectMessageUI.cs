@@ -126,7 +126,7 @@ public class DirectMessageUI : MonoBehaviour
         if (friends.Count == 0)
         {
             var empty = Instantiate(inboxRowPrefab, inboxContainer);
-            SetInboxRowText(empty, "No friends yet", "Add friends to start messaging");
+            SetInboxRowText(empty, "No friends yet", "Add friends to start messaging", null);
             return;
         }
 
@@ -134,7 +134,7 @@ public class DirectMessageUI : MonoBehaviour
         {
             var row = Instantiate(inboxRowPrefab, inboxContainer);
             _previews.TryGetValue(f.playerId, out string preview);
-            SetInboxRowText(row, f.displayName, preview ?? "Tap to start chatting…");
+            SetInboxRowText(row, f.displayName, preview ?? "Tap to start chatting…", f.profileImageUrl);
 
             string id   = f.playerId;
             string name = f.displayName;
@@ -143,10 +143,17 @@ public class DirectMessageUI : MonoBehaviour
         }
     }
 
-    private static void SetInboxRowText(GameObject row, string nameStr, string previewStr)
+    private static void SetInboxRowText(GameObject row, string nameStr, string previewStr, string avatarUrl)
     {
+        var avatarImg   = row.transform.Find("AvatarImage")?.GetComponent<Image>();
         var nameText    = row.transform.Find("NameText")?.GetComponent<TMP_Text>();
         var previewText = row.transform.Find("PreviewText")?.GetComponent<TMP_Text>();
+
+        if (avatarImg != null && ImageCache.Instance != null)
+        {
+            ImageCache.Instance.LoadImageToUI(avatarUrl, avatarImg, true);
+        }
+
         if (nameText    != null) nameText.text    = nameStr;
         if (previewText != null) previewText.text = previewStr;
     }
@@ -194,11 +201,29 @@ public class DirectMessageUI : MonoBehaviour
         if (messageBubblePrefab == null || threadContainer == null) return;
 
         var bubble   = Instantiate(messageBubblePrefab, threadContainer);
+        var avatarImg = bubble.transform.Find("AvatarImage")?.GetComponent<Image>();
         var tmpText  = bubble.GetComponentInChildren<TMP_Text>();
         if (tmpText == null) return;
 
         string myId   = PlayerPrefs.GetString("player_id", "local");
         bool   isMine = msg.senderId == myId;
+
+        // Load sender's avatar
+        if (avatarImg != null && ImageCache.Instance != null)
+        {
+            if (isMine && PlayerEconomy.Instance != null)
+            {
+                ImageCache.Instance.LoadImageToUI(PlayerEconomy.Instance.ProfileImageUrl, avatarImg, true);
+            }
+            else if (!isMine && FriendsManager.Instance != null)
+            {
+                var friend = FriendsManager.Instance.Friends.Find(f => f.playerId == msg.senderId);
+                if (friend != null)
+                {
+                    ImageCache.Instance.LoadImageToUI(friend.profileImageUrl, avatarImg, true);
+                }
+            }
+        }
 
         string timestamp = DateTimeOffset.FromUnixTimeMilliseconds(msg.timestamp)
                                          .ToLocalTime()

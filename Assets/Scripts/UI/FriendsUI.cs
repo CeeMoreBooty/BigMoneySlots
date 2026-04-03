@@ -75,11 +75,18 @@ public class FriendsUI : MonoBehaviour
         {
             if (friendRowPrefab == null) break;
             var row  = Instantiate(friendRowPrefab, parent);
+            var avatarImg = row.transform.Find("AvatarImage")?.GetComponent<Image>();
             var name = row.transform.Find("NameText")?.GetComponent<TMP_Text>();
             var status = row.transform.Find("StatusText")?.GetComponent<TMP_Text>();
             var acceptBtn = row.transform.Find("AcceptButton")?.GetComponent<Button>();
             var removeBtn = row.transform.Find("RemoveButton")?.GetComponent<Button>();
             var dmBtn     = row.transform.Find("DMButton")?.GetComponent<Button>();
+
+            // Load profile avatar
+            if (avatarImg != null && ImageCache.Instance != null)
+            {
+                ImageCache.Instance.LoadImageToUI(f.profileImageUrl, avatarImg, true);
+            }
 
             if (name   != null) name.text   = f.displayName;
             if (status != null) status.text = f.isOnline ? "🟢 Online" : "⚫ Offline";

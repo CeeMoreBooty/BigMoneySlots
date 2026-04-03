@@ -17,6 +17,7 @@ public class FriendsManager : MonoBehaviour
     {
         public string playerId;
         public string displayName;
+        public string profileImageUrl;
         public bool   isOnline;
         public string currentGame;
         public long   lastSeen;

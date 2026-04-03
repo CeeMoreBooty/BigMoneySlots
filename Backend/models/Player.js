@@ -18,6 +18,7 @@ const playerSchema = new mongoose.Schema({
     // Cosmetics
     badgeId:     { type: String, default: '' },
     reelSkinId:  { type: String, default: '' },
+    profileImageUrl: { type: String, default: '' },
 
     // Win boost
     winBoostMultiplier: { type: Number, default: 1 },

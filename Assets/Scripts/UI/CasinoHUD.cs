@@ -19,6 +19,7 @@ public class CasinoHUD : MonoBehaviour
     [SerializeField] private Image    gemIcon;
 
     [Header("Player Info")]
+    [SerializeField] private Image    profileImage;
     [SerializeField] private TMP_Text playerNameLabel;
     [SerializeField] private TMP_Text playerLevelLabel;
     [SerializeField] private Slider   xpBar;
@@ -87,6 +88,13 @@ public class CasinoHUD : MonoBehaviour
             _displayedCoins = PlayerEconomy.Instance.Coins;
             _targetCoins    = _displayedCoins;
             UpdateCoinText(_displayedCoins);
+
+            // Load profile image
+            if (profileImage != null && ImageCache.Instance != null)
+            {
+                string profileUrl = PlayerEconomy.Instance.ProfileImageUrl;
+                ImageCache.Instance.LoadImageToUI(profileUrl, profileImage, true);
+            }
         }
 
         if (GemSystem.Instance != null && gemsLabel != null)

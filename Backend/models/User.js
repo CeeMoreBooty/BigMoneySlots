@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     level:     { type: Number, default: 1 },
     xp:        { type: String, default: '0' },
     totalSpins:{ type: Number, default: 0 },
+    profileImageUrl: { type: String, default: '' },     // URL to user's profile image
     createdAt: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: Date.now }
 }, { versionKey: false });
@@ -25,13 +26,14 @@ userSchema.methods.comparePassword = function (plain) {
 
 userSchema.methods.toPublicJSON = function () {
     return {
-        id:         this._id,
-        username:   this.username,
-        coins:      this.coins,
-        gems:       this.gems,
-        level:      this.level,
-        xp:         this.xp,
-        totalSpins: this.totalSpins
+        id:              this._id,
+        username:        this.username,
+        coins:           this.coins,
+        gems:            this.gems,
+        level:           this.level,
+        xp:              this.xp,
+        totalSpins:      this.totalSpins,
+        profileImageUrl: this.profileImageUrl || ''
     };
 };
 

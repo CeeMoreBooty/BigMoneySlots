@@ -26,6 +26,14 @@ public class SettingsController : MonoBehaviour
     [SerializeField] private Button resetProgressButton;
     [SerializeField] private Button privacyPolicyButton;
     [SerializeField] private Button termsButton;
+    [SerializeField] private Button changeProfileImageButton;
+
+    [Header("Profile Image")]
+    [SerializeField] private Image currentProfileImage;
+    [SerializeField] private GameObject profileImagePanel;
+    [SerializeField] private Button confirmImageButton;
+    [SerializeField] private Button cancelImageButton;
+    [SerializeField] private TMP_InputField imageUrlInput;
 
     [Header("Reset Confirmation")]
     [SerializeField] private GameObject resetConfirmPanel;
@@ -49,10 +57,18 @@ public class SettingsController : MonoBehaviour
         privacyPolicyButton?.onClick.AddListener(() => Application.OpenURL("https://example.com/privacy"));
         termsButton?.onClick.AddListener(() => Application.OpenURL("https://example.com/terms"));
 
+        changeProfileImageButton?.onClick.AddListener(OnChangeProfileImage);
+        confirmImageButton?.onClick.AddListener(OnConfirmProfileImage);
+        cancelImageButton?.onClick.AddListener(() => profileImagePanel?.SetActive(false));
+
         if (versionText != null)
             versionText.text = $"v{Application.version}";
 
         resetConfirmPanel?.SetActive(false);
+        profileImagePanel?.SetActive(false);
+
+        // Load current profile image
+        RefreshProfileImage();
     }
 
     private void LoadSettings()
@@ -123,5 +139,78 @@ public class SettingsController : MonoBehaviour
         PlayerPrefs.Save();
         resetConfirmPanel?.SetActive(false);
         UIManager.Instance?.GoToMainMenu();
+    }
+
+    private void OnChangeProfileImage()
+    {
+        SoundManager.Instance?.PlayButtonClick();
+        profileImagePanel?.SetActive(true);
+
+        // Pre-fill with current URL
+        if (imageUrlInput != null && PlayerEconomy.Instance != null)
+        {
+            imageUrlInput.text = PlayerEconomy.Instance.ProfileImageUrl ?? "";
+        }
+    }
+
+    private void OnConfirmProfileImage()
+    {
+        SoundManager.Instance?.PlayButtonClick();
+
+        if (imageUrlInput == null) return;
+        string newUrl = imageUrlInput.text?.Trim() ?? "";
+
+        // Update locally
+        if (PlayerEconomy.Instance != null)
+        {
+            PlayerEconomy.Instance.SetProfileImage(newUrl);
+        }
+
+        // Update backend
+        StartCoroutine(UpdateProfileImageOnBackend(newUrl));
+
+        profileImagePanel?.SetActive(false);
+        RefreshProfileImage();
+    }
+
+    private void RefreshProfileImage()
+    {
+        if (currentProfileImage != null && ImageCache.Instance != null && PlayerEconomy.Instance != null)
+        {
+            string url = PlayerEconomy.Instance.ProfileImageUrl;
+            ImageCache.Instance.LoadImageToUI(url, currentProfileImage, true);
+        }
+    }
+
+    private System.Collections.IEnumerator UpdateProfileImageOnBackend(string imageUrl)
+    {
+        if (BackendClient.Instance == null || string.IsNullOrEmpty(BackendClient.AuthToken))
+        {
+            Debug.LogWarning("Not authenticated - cannot update profile image on backend");
+            yield break;
+        }
+
+        string json = JsonUtility.ToJson(new ProfileImageUpdate { profileImageUrl = imageUrl });
+        using (var req = UnityEngine.Networking.UnityWebRequest.Put($"{BackendClient.BaseUrl}/api/user/profile-image", json))
+        {
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            req.SetRequestHeader("Content-Type", "application/json");
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Profile image updated successfully on backend");
+            }
+            else
+            {
+                Debug.LogWarning($"Failed to update profile image on backend: {req.error}");
+            }
+        }
+    }
+
+    [System.Serializable]
+    private class ProfileImageUpdate
+    {
+        public string profileImageUrl;
     }
 }
