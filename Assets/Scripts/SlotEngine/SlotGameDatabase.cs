@@ -28,8 +28,26 @@ public static class SlotGameDatabase
         public bool     HasProgressive;
         public int      FreeSpinsCount;
         public string[] SymbolNames;
-        public string   BgColor;    // hex
+        public string   BgColor;    // hex e.g. "#0D0D2B"
         public string   AccentColor;
+
+        /// <summary>Returns BgColor as a Unity Color (falls back to black).</summary>
+        public Color ToBackgroundColor()
+        {
+            Color c = Color.black;
+            if (!ColorUtility.TryParseHtmlString(BgColor, out c))
+                Debug.LogWarning($"[SlotGameDatabase] Invalid BgColor '{BgColor}' for game '{GameId}'; using black.");
+            return c;
+        }
+
+        /// <summary>Returns AccentColor as a Unity Color (falls back to yellow).</summary>
+        public Color ToAccentColor()
+        {
+            Color c = Color.yellow;
+            if (!ColorUtility.TryParseHtmlString(AccentColor, out c))
+                Debug.LogWarning($"[SlotGameDatabase] Invalid AccentColor '{AccentColor}' for game '{GameId}'; using yellow.");
+            return c;
+        }
     }
 
     public static readonly List<GameDefinition> All = new List<GameDefinition>

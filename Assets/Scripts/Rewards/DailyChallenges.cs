@@ -27,8 +27,8 @@ public class DailyChallenges : MonoBehaviour
         public string        id;
         public ChallengeType type;
         public string        description;
-        public int           target;
-        public int           progress;
+        public long          target;
+        public long          progress;
         public bool          isComplete;
         public bool          rewardClaimed;
         public long          coinReward;
@@ -74,7 +74,7 @@ public class DailyChallenges : MonoBehaviour
     public void RecordWin(long amount, long bet)
     {
         RefreshIfNewDay();
-        RecordProgress(ChallengeType.WinCoins, (int)Math.Min(amount, int.MaxValue));
+        RecordProgress(ChallengeType.WinCoins, amount);
         if (bet > 0 && amount >= bet * 10)
             RecordProgress(ChallengeType.BigWinMultiplier, 1);
     }
@@ -112,7 +112,7 @@ public class DailyChallenges : MonoBehaviour
 
     // ── Internal ──────────────────────────────────────────────────────────────
 
-    private void RecordProgress(ChallengeType type, int amount)
+    private void RecordProgress(ChallengeType type, long amount)
     {
         bool anyCompleted = false;
         foreach (var c in TodayChallenges)
@@ -146,7 +146,7 @@ public class DailyChallenges : MonoBehaviour
         TodayChallenges.Clear();
         PlayerPrefs.SetString("dc_games_today", "");
 
-        var pool = new List<(ChallengeType type, string desc, int target, long coins, int gems)>
+        var pool = new List<(ChallengeType type, string desc, long target, long coins, int gems)>
         {
             (ChallengeType.SpinCount,          "Spin 50 times today",               50,   100_000_000L,  5),
             (ChallengeType.SpinCount,          "Spin 150 times today",             150,   350_000_000L, 15),
@@ -199,7 +199,7 @@ public class DailyChallenges : MonoBehaviour
         for (int i = 0; i < TodayChallenges.Count; i++)
         {
             var c = TodayChallenges[i];
-            PlayerPrefs.SetInt($"dc_{i}_prog",    c.progress);
+            PlayerPrefs.SetString($"dc_{i}_prog",  c.progress.ToString());
             PlayerPrefs.SetInt($"dc_{i}_done",    c.isComplete    ? 1 : 0);
             PlayerPrefs.SetInt($"dc_{i}_claimed", c.rewardClaimed ? 1 : 0);
         }
@@ -213,7 +213,7 @@ public class DailyChallenges : MonoBehaviour
         for (int i = 0; i < TodayChallenges.Count; i++)
         {
             var c = TodayChallenges[i];
-            c.progress     = PlayerPrefs.GetInt($"dc_{i}_prog",    0);
+            c.progress     = long.TryParse(PlayerPrefs.GetString($"dc_{i}_prog", "0"), out long prog) ? prog : 0;
             c.isComplete    = PlayerPrefs.GetInt($"dc_{i}_done",    0) == 1;
             c.rewardClaimed = PlayerPrefs.GetInt($"dc_{i}_claimed", 0) == 1;
         }

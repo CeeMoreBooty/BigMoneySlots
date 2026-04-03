@@ -176,7 +176,7 @@ public class LoyaltySystem : MonoBehaviour
     private void CheckComebackBonus()
     {
         double lastActive = double.TryParse(PlayerPrefs.GetString(KeyLastActiveTime, "0"), out double v) ? v : 0;
-        string todayKey = DateTime.UtcNow.Date.ToString("yyyy-MM-dd");
+        string todayKey = DateTime.UtcNow.ToString("yyyyMMdd");
 
         // Only give comeback bonus if away for 24+ hours AND not already given today
         if (lastActive > 0 && GetUtcNow() - lastActive >= 86400 &&
