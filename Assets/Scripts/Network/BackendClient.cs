@@ -41,26 +41,28 @@ public class BackendClient : MonoBehaviour
         Action<string> onError)
     {
         string url = $"{baseUrl}/leaderboard?limit={limit}";
-        using var req = UnityWebRequest.Get(url);
-        req.timeout = (int)requestTimeout;
-        req.SetRequestHeader("Accept", "application/json");
-
-        yield return req.SendWebRequest();
-
-        if (req.result != UnityWebRequest.Result.Success)
+        using (var req = UnityWebRequest.Get(url))
         {
-            onError?.Invoke(req.error);
-            yield break;
-        }
+            req.timeout = (int)requestTimeout;
+            req.SetRequestHeader("Accept", "application/json");
 
-        try
-        {
-            var response = JsonUtility.FromJson<LeaderboardResponse>(req.downloadHandler.text);
-            onSuccess?.Invoke(response?.entries ?? new List<LeaderboardController.LeaderboardEntry>());
-        }
-        catch (Exception ex)
-        {
-            onError?.Invoke($"Parse error: {ex.Message}");
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                onError?.Invoke(req.error);
+                yield break;
+            }
+
+            try
+            {
+                var response = JsonUtility.FromJson<LeaderboardResponse>(req.downloadHandler.text);
+                onSuccess?.Invoke(response?.entries ?? new List<LeaderboardController.LeaderboardEntry>());
+            }
+            catch (Exception ex)
+            {
+                onError?.Invoke($"Parse error: {ex.Message}");
+            }
         }
     }
 
@@ -77,17 +79,19 @@ public class BackendClient : MonoBehaviour
         string json = JsonUtility.ToJson(payload);
         byte[] body = Encoding.UTF8.GetBytes(json);
 
-        using var req = new UnityWebRequest($"{baseUrl}/leaderboard", "POST");
-        req.uploadHandler   = new UploadHandlerRaw(body);
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.timeout         = (int)requestTimeout;
-        req.SetRequestHeader("Content-Type", "application/json");
+        using (var req = new UnityWebRequest($"{baseUrl}/leaderboard", "POST"))
+        {
+            req.uploadHandler   = new UploadHandlerRaw(body);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.timeout         = (int)requestTimeout;
+            req.SetRequestHeader("Content-Type", "application/json");
 
-        yield return req.SendWebRequest();
+            yield return req.SendWebRequest();
 
-        bool success = req.result == UnityWebRequest.Result.Success;
-        if (!success) Debug.LogWarning($"[BackendClient] SubmitScore failed: {req.error}");
-        onComplete?.Invoke(success);
+            bool success = req.result == UnityWebRequest.Result.Success;
+            if (!success) Debug.LogWarning($"[BackendClient] SubmitScore failed: {req.error}");
+            onComplete?.Invoke(success);
+        }
     }
 
     /// <summary>Try submitting the score silently in the background.</summary>

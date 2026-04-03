@@ -119,11 +119,11 @@ public class VoiceChatManager : MonoBehaviour
         string body = $"{{\"roomId\":\"{roomId}\"}}";
         using (var req = new UnityWebRequest(url, "POST"))
         {
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
         }
     }
 
@@ -133,11 +133,11 @@ public class VoiceChatManager : MonoBehaviour
         string body = $"{{\"roomId\":\"{roomId}\"}}";
         using (var req = new UnityWebRequest(url, "POST"))
         {
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
         }
     }
 }

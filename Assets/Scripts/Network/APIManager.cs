@@ -89,15 +89,17 @@ public class APIManager : MonoBehaviour
     private IEnumerator Get(string path, Action<bool, string> callback)
     {
         string url = BaseUrl + path;
-        using var req = UnityWebRequest.Get(url);
-        req.SetRequestHeader("Content-Type", "application/json");
-        if (!string.IsNullOrEmpty(token))
-            req.SetRequestHeader("Authorization", "Bearer " + token);
+        using (var req = UnityWebRequest.Get(url))
+        {
+            req.SetRequestHeader("Content-Type", "application/json");
+            if (!string.IsNullOrEmpty(token))
+                req.SetRequestHeader("Authorization", "Bearer " + token);
 
-        yield return req.SendWebRequest();
+            yield return req.SendWebRequest();
 
-        bool ok = req.result == UnityWebRequest.Result.Success;
-        callback(ok, ok ? req.downloadHandler.text : req.error);
+            bool ok = req.result == UnityWebRequest.Result.Success;
+            callback(ok, ok ? req.downloadHandler.text : req.error);
+        }
     }
 
     private IEnumerator Post(string path, object body,
@@ -107,17 +109,19 @@ public class APIManager : MonoBehaviour
         string json = JsonUtility.ToJson(body);
         byte[] raw  = Encoding.UTF8.GetBytes(json);
 
-        using var req = new UnityWebRequest(url, "POST");
-        req.uploadHandler   = new UploadHandlerRaw(raw);
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-        if (!string.IsNullOrEmpty(token))
-            req.SetRequestHeader("Authorization", "Bearer " + token);
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            req.uploadHandler   = new UploadHandlerRaw(raw);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            if (!string.IsNullOrEmpty(token))
+                req.SetRequestHeader("Authorization", "Bearer " + token);
 
-        yield return req.SendWebRequest();
+            yield return req.SendWebRequest();
 
-        bool ok = req.result == UnityWebRequest.Result.Success;
-        callback(ok, ok ? req.downloadHandler.text : req.error);
+            bool ok = req.result == UnityWebRequest.Result.Success;
+            callback(ok, ok ? req.downloadHandler.text : req.error);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
