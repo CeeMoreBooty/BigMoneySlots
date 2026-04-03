@@ -116,7 +116,7 @@ public class DailyChallenges : MonoBehaviour
         RefreshIfNewDay();
         const string key = "dc_games_today";
         string played = PlayerPrefs.GetString(key, "");
-        if (played.Contains(gameId)) return;
+        if (played.Contains(gameId + ",")) return;
         PlayerPrefs.SetString(key, played + gameId + ",");
         PlayerPrefs.Save();
         RecordProgress(ChallengeType.PlayMultipleGames, 1);

@@ -24,7 +24,7 @@ public class SlotMachine : MonoBehaviour
     public event Action<bool>       OnAutoSpinChanged; // (isRunning)
 
     public bool IsAutoSpinning { get; private set; }
-    public bool IsSpinning     { get; private set; }   // true while reels resolving
+    public bool IsSpinning     { get; private set; }   // true while reels resolving (guards against re-entry)
 
     private Coroutine _autoSpinCoroutine;
 
@@ -72,6 +72,9 @@ public class SlotMachine : MonoBehaviour
     /// </summary>
     public void Spin()
     {
+        // ── Re-entrancy guard ──────────────────────────────────────────────────
+        if (IsSpinning) return;
+
         // ── Fraud guard ────────────────────────────────────────────────────────
         if (FraudPrevention.Instance != null && !FraudPrevention.Instance.AllowSpin())
         {
@@ -85,6 +88,8 @@ public class SlotMachine : MonoBehaviour
             Debug.Log("[SlotMachine] Not enough coins to spin.");
             return;
         }
+
+        IsSpinning = true;
 
         // ── Spin reels ─────────────────────────────────────────────────────────
         Symbol[] results = new Symbol[reels.Length];
@@ -111,6 +116,7 @@ public class SlotMachine : MonoBehaviour
             FraudPrevention.Instance?.ValidateWin(betAmount, jackpotPrize);
             FraudPrevention.Instance?.ValidateBalance();
 
+            IsSpinning = false;
             OnSpinComplete?.Invoke(jackpotPrize, true);
             return;
         }
@@ -136,12 +142,15 @@ public class SlotMachine : MonoBehaviour
         if (payout > 0) FraudPrevention.Instance?.ValidateWin(betAmount, payout);
         FraudPrevention.Instance?.ValidateBalance();
 
+        IsSpinning = false;
         OnSpinComplete?.Invoke(payout, false);
     }
 
     // ── Free-spin variant (does not deduct coins) ─────────────────────────────
     public void SpinFree()
     {
+        if (IsSpinning) return;
+
         if (PlayerEconomy.Instance == null || !PlayerEconomy.Instance.UseFreeSpins(1))
         {
             Debug.Log("[SlotMachine] No free spins remaining.");
@@ -151,6 +160,8 @@ public class SlotMachine : MonoBehaviour
         // Same fraud / reel logic; DailyChallenges tracks free-spin use
         if (FraudPrevention.Instance != null && !FraudPrevention.Instance.AllowSpin())
             return;
+
+        IsSpinning = true;
 
         Symbol[] results = new Symbol[reels.Length];
         for (int i = 0; i < reels.Length; i++)
@@ -172,6 +183,7 @@ public class SlotMachine : MonoBehaviour
 
         LoyaltySystem.Instance?.RegisterSpin();
         AnalyticsManager.Instance?.TrackSpin(0, payout, isJackpot: false);
+        IsSpinning = false;
         OnSpinComplete?.Invoke(payout, false);
     }
 
