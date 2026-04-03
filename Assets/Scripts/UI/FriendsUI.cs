@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 using TMPro;
 
@@ -114,15 +112,17 @@ public class FriendsUI : MonoBehaviour
         StartCoroutine(SearchPlayers(query));
     }
 
-    private IEnumerator SearchPlayers(string query)
+    private System.Collections.IEnumerator SearchPlayers(string query)
     {
         string url = $"{BackendClient.BaseUrl}/api/friends/search?q={UnityEngine.Networking.UnityWebRequest.EscapeURL(query)}";
-        using (var req = UnityEngine.Networking.UnityWebRequest.Get(url))
-        {
-            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-            yield return req.SendWebRequest();
+        using var req = UnityEngine.Networking.UnityWebRequest.Get(url);
+        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        yield return req.SendWebRequest();
 
-            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+        if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+        {
+            var wrapper = JsonUtility.FromJson<SearchWrapper>(req.downloadHandler.text);
+            if (searchResultsParent != null)
             {
                 var wrapper = JsonUtility.FromJson<SearchWrapper>(req.downloadHandler.text);
                 if (searchResultsParent != null)

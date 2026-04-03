@@ -48,6 +48,13 @@ public class SlotGameLoader : MonoBehaviour
         if (game != null) LoadGame(game);
     }
 
+    /// <summary>Unload the current slot game and return to the lobby scene.</summary>
+    public void ReturnToLobby()
+    {
+        ActiveGame = null;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
+    }
+
     private void LoadGame(SlotGameConfig game)
     {
         if (game == null) return;

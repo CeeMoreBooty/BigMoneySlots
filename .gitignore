@@ -1,24 +1,11 @@
-# ── Node / npm ────────────────────────────────────────────────────────────────
-node_modules/
-npm-debug.log*
-yarn-error.log*
-package-lock.json
+# Dependencies
+Backend/node_modules/
 
-# ── Environment / Secrets ─────────────────────────────────────────────────────
-# NEVER commit .env — it contains real API keys and secrets
+# Environment
 .env
-env.
 Backend/.env
-*.env
-*.env.local
-*.env.production
-*.env.staging
 
-# ── Google service account key (contains private key) ────────────────────────
-Backend/config/google-service-account.json
-config/google-service-account.json
-
-# ── Unity build artifacts ─────────────────────────────────────────────────────
+# Unity auto-generated
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
@@ -28,23 +15,17 @@ config/google-service-account.json
 [Uu]ser[Ss]ettings/
 *.pidb
 *.suo
-*.userprefs
 *.sln
 *.csproj
 *.unityproj
 *.DS_Store
+*.booproj
+Thumbs.db
+Desktop.ini
 *.apk
 *.aab
-*.ipa
-
-# ── Unity auto-generated lock file (do not commit) ────────────────────────────
-Packages/packages-lock.json
-
-# ── Unity crash / diagnostics ─────────────────────────────────────────────────
+*.unitypackage
+*.unity3d
 crashlytics-build.properties
-sysinfo.txt
-
-# ── OS artifacts ──────────────────────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-desktop.ini
+ExportedObj/
+*.tmp
