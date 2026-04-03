@@ -1,24 +1,4 @@
-# ── Node / npm ────────────────────────────────────────────────────────────────
-node_modules/
-npm-debug.log*
-yarn-error.log*
-package-lock.json
-
-# ── Environment / Secrets ─────────────────────────────────────────────────────
-# NEVER commit .env — it contains real API keys and secrets
-.env
-env.
-Backend/.env
-*.env
-*.env.local
-*.env.production
-*.env.staging
-
-# ── Google service account key (contains private key) ────────────────────────
-Backend/config/google-service-account.json
-config/google-service-account.json
-
-# ── Unity build artifacts ─────────────────────────────────────────────────────
+# Unity generated
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
@@ -26,18 +6,32 @@ config/google-service-account.json
 [Bb]uilds/
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Unity auto generated (recreatable)
 *.pidb
-*.suo
-*.userprefs
+*.pdb
+*.mdb
+
+# Visual Studio
+.vs/
 *.sln
 *.csproj
 *.unityproj
-*.DS_Store
-*.apk
-*.aab
-*.ipa
 
-# ── OS artifacts ──────────────────────────────────────────────────────────────
+# OS
 .DS_Store
 Thumbs.db
-desktop.ini
+
+# Unity cache
+AssetStoreTools*
+
+# JetBrains IDEs
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs

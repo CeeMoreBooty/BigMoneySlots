@@ -1,221 +1,241 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
-/// Daily Challenges — 3 unique challenges generated each day at midnight UTC.
-/// Completing challenges awards gems + coins.
-/// Challenge types cycle across: SpinCount, BigWin, JackpotHit, UseFreeSpin, PlayTournament.
+/// Daily challenge system. Generates 3 challenges per day, tracks progress via
+/// PlayerPrefs, and awards coins on completion.
+/// Uses long values to support 5B-coin targets.
 /// </summary>
 public class DailyChallenges : MonoBehaviour
 {
-    public static DailyChallenges Instance { get; private set; }
+    // ── Challenge data ────────────────────────────────────────────────────────
 
-    public enum ChallengeType
-    {
-        SpinCount,          // Spin X times today
-        BigWinMultiplier,   // Land a win ≥ X× your bet
-        UseFreeSpin,        // Use X free spins
-        PlayTournament,     // Enter a tournament
-        WinCoins,           // Win X coins total today
-        PlayMultipleGames,  // Play X different slot games
-    }
+    public enum ChallengeType { SpinCount, WinAmount, BigWinCount, JackpotHit, ReachBet }
 
     [Serializable]
     public class Challenge
     {
         public string        id;
         public ChallengeType type;
-        public string        description;
-        public int           target;
-        public int           progress;
-        public bool          isComplete;
-        public bool          rewardClaimed;
-        public long          coinReward;
-        public int           gemReward;
+        public string        displayName;
+        public long          target;     // long for up to 5B-coin goals
+        public long          reward;
+        public bool          completed;
+
+        // Runtime progress – stored as string in PlayerPrefs for large values
+        private long _progress;
+        public long Progress
+        {
+            get => _progress;
+            set => _progress = Math.Min(value, target);
+        }
+
+        public float ProgressRatio => target > 0 ? (float)Progress / target : 0f;
+
+        public string ProgressKey => $"DailyChallenge_{id}_Progress";
+        public string DoneKey     => $"DailyChallenge_{id}_Done";
+        public string DateKey     => $"DailyChallenge_{id}_Date";
     }
 
-    public List<Challenge> TodayChallenges { get; private set; } = new();
+    // ── UI ───────────────────────────────────────────────────────────────────
 
-    public static event Action              OnChallengesRefreshed;
-    public static event Action<Challenge>   OnChallengeCompleted;
-
-    private string _lastChallengeDay = "";
-
-    private void Awake()
+    [System.Serializable]
+    public class ChallengeRowUI
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-        RefreshIfNewDay();
+        public TextMeshProUGUI nameText;
+        public TextMeshProUGUI progressText;
+        public Slider          progressBar;
+        public Button          claimButton;
+        public GameObject      completedBadge;
     }
+
+    [Header("UI")]
+    [SerializeField] private GameObject       panel;
+    [SerializeField] private Button           closeButton;
+    [SerializeField] private ChallengeRowUI[] rows;
+    [SerializeField] private TextMeshProUGUI  resetTimerText;
+    [SerializeField] private CoinDisplay      coinDisplay;
+
+    // ── State ─────────────────────────────────────────────────────────────────
+
+    private List<Challenge> todayChallenges = new List<Challenge>();
+
+    // Predefined challenge pool
+    private static readonly (ChallengeType type, string name, long target, long reward)[] Pool =
+    {
+        (ChallengeType.SpinCount,   "Spin 50 times",             50L,           1_000L),
+        (ChallengeType.SpinCount,   "Spin 200 times",           200L,           5_000L),
+        (ChallengeType.WinAmount,   "Win 10,000 coins",      10_000L,           2_000L),
+        (ChallengeType.WinAmount,   "Win 1,000,000 coins", 1_000_000L,          50_000L),
+        (ChallengeType.WinAmount,   "Win 5,000,000,000", 5_000_000_000L,     500_000L),
+        (ChallengeType.BigWinCount, "Score 3 Big Wins",           3L,           5_000L),
+        (ChallengeType.BigWinCount, "Score 10 Big Wins",         10L,          25_000L),
+        (ChallengeType.ReachBet,    "Bet 5,000 on a spin",    5_000L,           3_000L),
+        (ChallengeType.ReachBet,    "Bet max on a spin",     10_000L,          10_000L),
+        (ChallengeType.JackpotHit,  "Hit the Jackpot!",           1L,         100_000L),
+    };
 
     private void Start()
     {
-        // Hook into game events
-        LoyaltySystem.OnMilestoneReached += (_, _, _) => RecordProgress(ChallengeType.SpinCount, 1);
-        ProgressiveJackpot.OnJackpotWon  += (_, _, _) => RecordProgress(ChallengeType.PlayTournament, 1);
+        closeButton?.onClick.AddListener(Hide);
+        panel?.SetActive(false);
+        GenerateTodayChallenges();
     }
 
-    // ── Progress tracking ─────────────────────────────────────────────────────
-
-    public void RecordSpin()
+    private void Update()
     {
-        RefreshIfNewDay();
-        RecordProgress(ChallengeType.SpinCount, 1);
+        UpdateResetTimer();
     }
 
-    public void RecordFreeSpin()
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    public void Show()
     {
-        RefreshIfNewDay();
-        RecordProgress(ChallengeType.UseFreeSpin, 1);
+        panel?.SetActive(true);
+        GenerateTodayChallenges();
+        RefreshUI();
     }
 
-    public void RecordWin(long amount, long bet)
+    public void Hide()
     {
-        RefreshIfNewDay();
-        RecordProgress(ChallengeType.WinCoins, (int)Math.Min(amount, int.MaxValue));
-        if (bet > 0 && amount >= bet * 10)
-            RecordProgress(ChallengeType.BigWinMultiplier, 1);
+        panel?.SetActive(false);
+        SoundManager.Instance?.PlayButtonClick();
     }
 
-    public void RecordGamePlayed(string gameId)
-    {
-        RefreshIfNewDay();
-        // Count unique games played today
-        var key   = "dc_games_today";
-        var played = PlayerPrefs.GetString(key, "");
-        if (!played.Contains(gameId))
-        {
-            PlayerPrefs.SetString(key, played + gameId + ",");
-            PlayerPrefs.Save();
-            RecordProgress(ChallengeType.PlayMultipleGames, 1);
-        }
-    }
+    // Called by SlotMachine / GameUIController after each relevant event
+    public void OnSpin()            => IncrementChallenge(ChallengeType.SpinCount, 1);
+    public void OnWin(long amount)  => IncrementChallenge(ChallengeType.WinAmount, amount);
+    public void OnBigWin()          => IncrementChallenge(ChallengeType.BigWinCount, 1);
+    public void OnJackpot()         => IncrementChallenge(ChallengeType.JackpotHit, 1);
+    public void OnBet(long amount)  => SetChallengeIfGreater(ChallengeType.ReachBet, amount);
 
-    public void RecordTournamentEntry() => RecordProgress(ChallengeType.PlayTournament, 1);
+    // ── Challenge generation ──────────────────────────────────────────────────
 
-    // ── Claim reward ──────────────────────────────────────────────────────────
-
-    public bool ClaimReward(string challengeId)
-    {
-        var c = TodayChallenges.Find(x => x.id == challengeId);
-        if (c == null || !c.isComplete || c.rewardClaimed) return false;
-
-        PlayerEconomy.Instance?.AddCoins(c.coinReward);
-        GemSystem.Instance?.AddGems(c.gemReward);
-        c.rewardClaimed = true;
-        Save();
-        Debug.Log($"[DailyChallenges] Claimed: {c.description} → +{c.coinReward:N0} coins, +{c.gemReward} gems");
-        return true;
-    }
-
-    // ── Internal ──────────────────────────────────────────────────────────────
-
-    private void RecordProgress(ChallengeType type, int amount)
-    {
-        bool anyCompleted = false;
-        foreach (var c in TodayChallenges)
-        {
-            if (c.type != type || c.isComplete) continue;
-            c.progress += amount;
-            if (c.progress >= c.target)
-            {
-                c.progress  = c.target;
-                c.isComplete = true;
-                OnChallengeCompleted?.Invoke(c);
-                anyCompleted = true;
-            }
-        }
-        if (anyCompleted) Save();
-    }
-
-    private void RefreshIfNewDay()
+    private void GenerateTodayChallenges()
     {
         string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-        if (_lastChallengeDay == today) return;
-        _lastChallengeDay = today;
-        GenerateChallenges(today);
-    }
+        todayChallenges.Clear();
 
-    private void GenerateChallenges(string dateKey)
-    {
-        // Use date as seed for deterministic daily set
-        var rng = new System.Random(dateKey.GetHashCode());
-
-        TodayChallenges.Clear();
-        PlayerPrefs.SetString("dc_games_today", "");
-
-        var pool = new List<(ChallengeType type, string desc, int target, long coins, int gems)>
+        // Use date as a seed for deterministic daily selection
+        System.Random rng = new System.Random(today.GetHashCode());
+        var indices = new List<int>();
+        while (indices.Count < 3 && indices.Count < Pool.Length)
         {
-            (ChallengeType.SpinCount,          "Spin 50 times today",               50,   100_000_000L,  5),
-            (ChallengeType.SpinCount,          "Spin 150 times today",             150,   350_000_000L, 15),
-            (ChallengeType.SpinCount,          "Spin 300 times today",             300,   800_000_000L, 30),
-            (ChallengeType.BigWinMultiplier,   "Land a 10× win",                    1,    200_000_000L, 10),
-            (ChallengeType.BigWinMultiplier,   "Land 3 wins of 10× or more",        3,    600_000_000L, 25),
-            (ChallengeType.UseFreeSpin,        "Use 10 free spins",                10,   150_000_000L,  8),
-            (ChallengeType.UseFreeSpin,        "Use 30 free spins",                30,   400_000_000L, 20),
-            (ChallengeType.PlayTournament,     "Enter a tournament",                1,    250_000_000L, 12),
-            (ChallengeType.WinCoins,           "Win 1B coins total today",  1_000_000_000, 300_000_000L, 15),
-            (ChallengeType.WinCoins,           "Win 5B coins total today",  5_000_000_000, 1_000_000_000L, 50),
-            (ChallengeType.PlayMultipleGames,  "Play 3 different slot games",       3,    500_000_000L, 20),
-            (ChallengeType.PlayMultipleGames,  "Play 5 different slot games",       5,    1_200_000_000L, 40),
-        };
-
-        // Pick 3 non-duplicate type challenges
-        var chosen = new List<int>();
-        var usedTypes = new System.Collections.Generic.HashSet<ChallengeType>();
-        while (chosen.Count < 3 && chosen.Count < pool.Count)
-        {
-            int idx = rng.Next(pool.Count);
-            if (chosen.Contains(idx)) continue;
-            if (usedTypes.Contains(pool[idx].type)) continue;
-            chosen.Add(idx);
-            usedTypes.Add(pool[idx].type);
+            int idx = rng.Next(Pool.Length);
+            if (!indices.Contains(idx)) indices.Add(idx);
         }
 
-        for (int i = 0; i < chosen.Count; i++)
+        foreach (int idx in indices)
         {
-            var p = pool[chosen[i]];
-            TodayChallenges.Add(new Challenge
+            var (type, name, target, reward) = Pool[idx];
+            var challenge = new Challenge
             {
-                id          = $"dc_{dateKey}_{i}",
-                type        = p.type,
-                description = p.desc,
-                target      = p.target,
-                coinReward  = p.coins,
-                gemReward   = p.gems,
-            });
-        }
+                id          = $"{today}_{idx}",
+                type        = type,
+                displayName = name,
+                target      = target,
+                reward      = reward,
+            };
 
-        Load(dateKey);
-        PlayerPrefs.SetString("dc_last_day", dateKey);
-        PlayerPrefs.Save();
-        OnChallengesRefreshed?.Invoke();
+            // Load persisted progress
+            string storedDate = PlayerPrefs.GetString(challenge.DateKey, string.Empty);
+            if (storedDate == today)
+            {
+                challenge.Progress  = long.Parse(PlayerPrefs.GetString(challenge.ProgressKey, "0"));
+                challenge.completed = PlayerPrefs.GetInt(challenge.DoneKey, 0) == 1;
+            }
+            else
+            {
+                // New day: reset
+                PlayerPrefs.SetString(challenge.DateKey, today);
+                PlayerPrefs.SetString(challenge.ProgressKey, "0");
+                PlayerPrefs.SetInt(challenge.DoneKey, 0);
+            }
+
+            todayChallenges.Add(challenge);
+        }
     }
 
-    private void Save()
+    private void IncrementChallenge(ChallengeType type, long delta)
     {
-        for (int i = 0; i < TodayChallenges.Count; i++)
+        bool anyCompleted = false;
+        foreach (var c in todayChallenges)
         {
-            var c = TodayChallenges[i];
-            PlayerPrefs.SetInt($"dc_{i}_prog",    c.progress);
-            PlayerPrefs.SetInt($"dc_{i}_done",    c.isComplete    ? 1 : 0);
-            PlayerPrefs.SetInt($"dc_{i}_claimed", c.rewardClaimed ? 1 : 0);
+            if (c.type != type || c.completed) continue;
+            c.Progress += delta;
+            SaveProgress(c);
+            if (c.Progress >= c.target) anyCompleted = true;
         }
-        PlayerPrefs.Save();
+        if (anyCompleted) RefreshUI();
     }
 
-    private void Load(string dateKey)
+    private void SetChallengeIfGreater(ChallengeType type, long value)
     {
-        string savedDay = PlayerPrefs.GetString("dc_last_day", "");
-        if (savedDay != dateKey) return;  // different day → fresh challenges
-        for (int i = 0; i < TodayChallenges.Count; i++)
+        foreach (var c in todayChallenges)
         {
-            var c = TodayChallenges[i];
-            c.progress     = PlayerPrefs.GetInt($"dc_{i}_prog",    0);
-            c.isComplete    = PlayerPrefs.GetInt($"dc_{i}_done",    0) == 1;
-            c.rewardClaimed = PlayerPrefs.GetInt($"dc_{i}_claimed", 0) == 1;
+            if (c.type != type || c.completed) continue;
+            if (value > c.Progress)
+            {
+                c.Progress = value;
+                SaveProgress(c);
+            }
         }
+        RefreshUI();
+    }
+
+    private void SaveProgress(Challenge c)
+    {
+        PlayerPrefs.SetString(c.ProgressKey, c.Progress.ToString());
+        PlayerPrefs.SetInt(c.DoneKey, c.completed ? 1 : 0);
+    }
+
+    // ── UI refresh ────────────────────────────────────────────────────────────
+
+    private void RefreshUI()
+    {
+        for (int i = 0; i < rows.Length && i < todayChallenges.Count; i++)
+        {
+            var c   = todayChallenges[i];
+            var row = rows[i];
+
+            if (row.nameText     != null) row.nameText.text     = $"{c.displayName} (+{CoinDisplay.FormatCoins(c.reward)})";
+            if (row.progressText != null) row.progressText.text = $"{CoinDisplay.FormatCoins(c.Progress)} / {CoinDisplay.FormatCoins(c.target)}";
+            if (row.progressBar  != null) row.progressBar.value = c.ProgressRatio;
+
+            bool canClaim = c.Progress >= c.target && !c.completed;
+            row.claimButton?.gameObject.SetActive(canClaim);
+            row.completedBadge?.SetActive(c.completed);
+
+            int captured = i;
+            row.claimButton?.onClick.RemoveAllListeners();
+            row.claimButton?.onClick.AddListener(() => ClaimChallenge(captured));
+        }
+    }
+
+    private void ClaimChallenge(int index)
+    {
+        if (index < 0 || index >= todayChallenges.Count) return;
+        var c = todayChallenges[index];
+        if (c.completed || c.Progress < c.target) return;
+
+        c.completed = true;
+        SaveProgress(c);
+        GameData.AddCoins(c.reward);
+        GameData.Save();
+
+        SoundManager.Instance?.PlayCoinDrop();
+        coinDisplay?.AnimateTo(GameData.Coins);
+        RefreshUI();
+    }
+
+    private void UpdateResetTimer()
+    {
+        if (resetTimerText == null) return;
+        DateTime nextReset = DateTime.UtcNow.Date.AddDays(1);
+        TimeSpan remaining = nextReset - DateTime.UtcNow;
+        resetTimerText.text = $"Resets in {remaining.Hours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
     }
 }
