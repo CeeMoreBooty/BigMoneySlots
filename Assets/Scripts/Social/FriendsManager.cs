@@ -78,9 +78,17 @@ public class FriendsManager : MonoBehaviour
                 var wrapper = JsonUtility.FromJson<FriendsWrapper>(req.downloadHandler.text);
                 if (wrapper != null)
                 {
+                    int oldPendingCount = Pending.Count;
                     Friends = wrapper.friends  ?? new List<Friend>();
                     Pending = wrapper.pending  ?? new List<Friend>();
                     OnFriendsUpdated?.Invoke();
+
+                    // Notify about new incoming friend requests
+                    if (Pending.Count > oldPendingCount)
+                    {
+                        foreach (var p in Pending)
+                            if (p.isPending) OnFriendRequestReceived?.Invoke(p.displayName);
+                    }
                 }
             }
         }

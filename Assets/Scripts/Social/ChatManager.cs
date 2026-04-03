@@ -43,7 +43,8 @@ public class ChatManager : MonoBehaviour
     public static event Action<string>                   OnConnectionError;
     public static event Action                           OnConnected;
 
-    private bool _connected;
+    /// <summary>True when the chat transport is connected.</summary>
+    public bool IsConnected { get; private set; }
 
     private void Awake()
     {
@@ -63,7 +64,7 @@ public class ChatManager : MonoBehaviour
         // the package is imported. The stubs below show the intended integration.
         Debug.Log("[ChatManager] Connecting to chat server…");
         StartCoroutine(LoadRecentHistory(ChatChannel.Global));
-        _connected = true;
+        IsConnected = true;
         OnConnected?.Invoke();
     }
 
@@ -123,7 +124,10 @@ public class ChatManager : MonoBehaviour
             req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
             yield return req.SendWebRequest();
             if (req.result != UnityWebRequest.Result.Success)
+            {
                 Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+                OnConnectionError?.Invoke(req.error);
+            }
         }
     }
 

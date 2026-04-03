@@ -25,8 +25,11 @@ public class VoiceChatManager : MonoBehaviour
     private string     _micDevice;
     private bool       _isRecording;
 
+    // Events for Vivox/WebRTC integration — invoked by the voice SDK callback layer
+#pragma warning disable CS0067 // Events are raised by external voice SDK integration
     public static event Action<string> OnSpeakerStarted;   // playerId
     public static event Action<string> OnSpeakerStopped;   // playerId
+#pragma warning restore CS0067
     public static event Action<bool>   OnMuteChanged;
     public static event Action<string> OnJoinedRoom;
     public static event Action         OnLeftRoom;
