@@ -1,5 +1,3 @@
-using UnityEngine;
-
 /// <summary>
 /// Shared backend base URL used by all Unity REST clients.
 /// Change BaseUrl to your deployed server address before building.
@@ -13,5 +11,5 @@ public static class BackendClient
 #endif
 
     public static string AuthToken =>
-        PlayerPrefs.GetString("auth_token", "");
+        UnityEngine.PlayerPrefs.GetString("auth_token", "");
 }

@@ -1,58 +1,76 @@
-name: Deploy Backend to Cloud
+name: Deploy Backend
 
 on:
   push:
-    branches:
-      - Main
+    branches: [main, master]
     paths:
-      - 'Backend/**'
+      - "Backend/**"
+      - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # ── Option A: push Docker image to GHCR and SSH-deploy it ──────────────────
+  docker-deploy:
+    name: Build & Push Docker image, deploy via SSH
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: '18'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        working-directory: ./Backend
-        run: npm install
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Backend
+          file: ./Backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/bigmoneyslots-backend:latest
+            ghcr.io/${{ github.repository_owner }}/bigmoneyslots-backend:${{ github.sha }}
 
-      - name: Run tests
-        working-directory: ./Backend
-        run: npm test || echo "No tests configured"
+      # ── SSH deploy (optional) ─────────────────────────────────────────────
+      # Set these repository secrets to enable automatic SSH deployment:
+      #   DEPLOY_HOST      – IP or hostname of your server
+      #   DEPLOY_USER      – SSH user  (e.g. ubuntu)
+      #   DEPLOY_KEY       – Private SSH key (the matching public key must be
+      #                      in ~/.ssh/authorized_keys on the server)
+      #   DEPLOY_PORT      – SSH port (default 22)
+      - name: Deploy to server via SSH
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key:      ${{ secrets.DEPLOY_KEY }}
+          port:     ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            IMAGE=ghcr.io/${{ github.repository_owner }}/bigmoneyslots-backend:latest
 
-      # Deploy to your preferred cloud provider
-      # Uncomment and configure one of the following:
+            # Authenticate with GHCR on the server (token stored as a server env var)
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-      # For Heroku:
-      # - name: Deploy to Heroku
-      #   uses: akhileshns/heroku-deploy@v3.12.14
-      #   with:
-      #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-      #     heroku_app_name: "bigmoneyslots-api"
-      #     heroku_email: ${{ secrets.HEROKU_EMAIL }}
-      #     appdir: "Backend"
+            docker pull $IMAGE
 
-      # For Railway:
-      # - name: Deploy to Railway
-      #   run: |
-      #     npm install -g @railway/cli
-      #     railway up --service backend
-      #   env:
-      #     RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+            # Gracefully replace the running container
+            docker stop bigmoneyslots-backend 2>/dev/null || true
+            docker rm   bigmoneyslots-backend 2>/dev/null || true
 
-      # For Render:
-      # - name: Trigger Render Deploy
-      #   run: |
-      #     curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+            docker run -d \
+              --name bigmoneyslots-backend \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              --env-file /home/${{ secrets.DEPLOY_USER }}/bigmoneyslots/.env \
+              $IMAGE
 
-      - name: Deployment status
-        run: echo "Backend deployment completed! Configure your cloud provider above."
+            docker image prune -f

@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 using TMPro;
 
@@ -81,22 +79,27 @@ public class FriendsUI : MonoBehaviour
             var status = row.transform.Find("StatusText")?.GetComponent<TMP_Text>();
             var acceptBtn = row.transform.Find("AcceptButton")?.GetComponent<Button>();
             var removeBtn = row.transform.Find("RemoveButton")?.GetComponent<Button>();
+            var dmBtn     = row.transform.Find("DMButton")?.GetComponent<Button>();
 
             if (name   != null) name.text   = f.displayName;
             if (status != null) status.text = f.isOnline ? "🟢 Online" : "⚫ Offline";
 
-            string id = f.playerId;
+            string id       = f.playerId;
+            string dName    = f.displayName;
             if (isPending)
             {
                 acceptBtn?.gameObject.SetActive(true);
                 removeBtn?.gameObject.SetActive(true);
+                dmBtn?.gameObject.SetActive(false);
                 acceptBtn?.onClick.AddListener(() => { FriendsManager.Instance?.AcceptFriendRequest(id); });
                 removeBtn?.onClick.AddListener(() => { FriendsManager.Instance?.DeclineFriendRequest(id); });
             }
             else
             {
                 acceptBtn?.gameObject.SetActive(false);
+                dmBtn?.gameObject.SetActive(true);
                 removeBtn?.onClick.AddListener(() => { FriendsManager.Instance?.RemoveFriend(id); });
+                dmBtn?.onClick.AddListener(() => { DirectMessageUI.Instance?.OpenThread(id, dName); });
             }
         }
     }
@@ -109,40 +112,42 @@ public class FriendsUI : MonoBehaviour
         StartCoroutine(SearchPlayers(query));
     }
 
-    private IEnumerator SearchPlayers(string query)
+    private System.Collections.IEnumerator SearchPlayers(string query)
     {
-        string url = $"{BackendClient.BaseUrl}/api/friends/search?q={UnityWebRequest.EscapeURL(query)}";
-        using var req = UnityWebRequest.Get(url);
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
+        string url = $"{BackendClient.BaseUrl}/api/friends/search?q={UnityEngine.Networking.UnityWebRequest.EscapeURL(query)}";
+        using (var req = UnityEngine.Networking.UnityWebRequest.Get(url))
+        {
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
 
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            var wrapper = JsonUtility.FromJson<SearchWrapper>(req.downloadHandler.text);
-            if (searchResultsParent != null)
+            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
-                foreach (Transform child in searchResultsParent) Destroy(child.gameObject);
-                foreach (var p in wrapper.results)
+                var wrapper = JsonUtility.FromJson<SearchWrapper>(req.downloadHandler.text);
+                if (searchResultsParent != null)
                 {
-                    if (friendRowPrefab == null) break;
-                    var row       = Instantiate(friendRowPrefab, searchResultsParent);
-                    var nameText  = row.transform.Find("NameText")?.GetComponent<TMP_Text>();
-                    var addBtn    = row.transform.Find("AcceptButton")?.GetComponent<Button>();
-                    if (nameText != null) nameText.text = p.displayName;
-                    string id = p.playerId;
-                    addBtn?.gameObject.SetActive(true);
-                    addBtn?.onClick.AddListener(() =>
+                    foreach (Transform child in searchResultsParent) Destroy(child.gameObject);
+                    foreach (var p in wrapper.results)
                     {
-                        FriendsManager.Instance?.SendFriendRequest(id);
-                        SetFeedback($"Friend request sent to {p.displayName}!");
-                    });
+                        if (friendRowPrefab == null) break;
+                        var row       = Instantiate(friendRowPrefab, searchResultsParent);
+                        var nameText  = row.transform.Find("NameText")?.GetComponent<TMP_Text>();
+                        var addBtn    = row.transform.Find("AcceptButton")?.GetComponent<Button>();
+                        if (nameText != null) nameText.text = p.displayName;
+                        string id = p.playerId;
+                        addBtn?.gameObject.SetActive(true);
+                        addBtn?.onClick.AddListener(() =>
+                        {
+                            FriendsManager.Instance?.SendFriendRequest(id);
+                            SetFeedback($"Friend request sent to {p.displayName}!");
+                        });
+                    }
                 }
+                SetFeedback(wrapper.results.Count == 0 ? "No players found." : $"Found {wrapper.results.Count} player(s).");
             }
-            SetFeedback(wrapper.results.Count == 0 ? "No players found." : $"Found {wrapper.results.Count} player(s).");
-        }
-        else
-        {
-            SetFeedback("Search failed. Please try again.");
+            else
+            {
+                SetFeedback("Search failed. Please try again.");
+            }
         }
     }
 

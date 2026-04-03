@@ -13,7 +13,7 @@ public class Reel : MonoBehaviour
             Debug.LogWarning("Reel has no symbols assigned.");
             return null;
         }
-        CurrentSymbol = availableSymbols[Random.Range(0, availableSymbols.Length)];
+        CurrentSymbol = availableSymbols[SecureRandom.Range(0, availableSymbols.Length)];
         return CurrentSymbol;
     }
 }

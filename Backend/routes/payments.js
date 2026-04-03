@@ -1,5 +1,6 @@
 const express     = require('express');
 const auth        = require('../middleware/auth');
+const adminOnly   = require('../middleware/adminOnly');
 const Player      = require('../models/Player');
 const Transaction = require('../models/Transaction');
 const { verifyGooglePlayPurchase } = require('../services/googlePlayVerifier');
@@ -45,6 +46,8 @@ router.post('/google-play/verify', auth, async (req, res) => {
         await grantProduct(req.player, productId, product, purchaseToken, 'google_play');
         res.json({ success: true, productId });
     } catch (err) {
+        // Unique index violation — purchase was already processed (race condition)
+        if (err.code === 11000) return res.status(409).json({ error: 'Purchase already processed' });
         console.error('[payments/google-play]', err.message);
         res.status(500).json({ error: err.message });
     }
@@ -100,6 +103,8 @@ router.post('/paypal/capture', auth, async (req, res) => {
         await grantProduct(req.player, productId, product, orderId, 'paypal');
         res.json({ success: true, productId });
     } catch (err) {
+        // Unique index violation — order was already captured (race condition)
+        if (err.code === 11000) return res.status(409).json({ error: 'Order already captured' });
         console.error('[payments/paypal/capture]', err.message);
         res.status(500).json({ error: err.message });
     }
@@ -109,9 +114,9 @@ router.post('/paypal/capture', auth, async (req, res) => {
 /**
  * POST /api/payments/paypal/payout
  * Body: { recipientEmail, amount, note }
- * Requires admin JWT or internal service call — add admin middleware before exposing.
+ * Requires both a valid player JWT and the x-admin-secret header.
  */
-router.post('/paypal/payout', auth, async (req, res) => {
+router.post('/paypal/payout', auth, adminOnly, async (req, res) => {
     try {
         const { recipientEmail, amount, note } = req.body;
         if (!recipientEmail || !amount)

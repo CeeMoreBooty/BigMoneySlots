@@ -77,7 +77,8 @@ public class AccountLinking : MonoBehaviour
         string url  = $"{BackendClient.BaseUrl}/api/account/link";
         string body = $"{{\"provider\":\"{provider.ToString().ToLower()}\",\"token\":\"{token}\"}}";
 
-        using var req = new UnityWebRequest(url, "POST");
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
         req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type",  "application/json");
@@ -86,45 +87,61 @@ public class AccountLinking : MonoBehaviour
 
         if (req.result == UnityWebRequest.Result.Success)
         {
-            var resp = JsonUtility.FromJson<LinkResponse>(req.downloadHandler.text);
-            var s    = statuses[(int)provider];
-            s.isLinked    = true;
-            s.displayName = resp.displayName;
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type",  "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
+            yield return req.SendWebRequest();
 
-            if (!s.bonusClaimed && resp.bonusGranted)
+            if (req.result == UnityWebRequest.Result.Success)
             {
-                s.bonusClaimed = true;
-                long bonus = BonusForProvider(provider);
-                PlayerEconomy.Instance?.AddCoins(bonus);
-                OnLinkedAndBonusGranted?.Invoke(provider, bonus);
-                Debug.Log($"[AccountLinking] {provider} linked! Bonus: +{bonus:N0} coins");
-            }
+                var resp = JsonUtility.FromJson<LinkResponse>(req.downloadHandler.text);
+                var s    = statuses[(int)provider];
+                s.isLinked    = true;
+                s.displayName = resp.displayName;
 
-            SaveStatuses();
+                if (!s.bonusClaimed && resp.bonusGranted)
+                {
+                    s.bonusClaimed = true;
+                    long bonus = BonusForProvider(provider);
+                    PlayerEconomy.Instance?.AddCoins(bonus);
+                    OnLinkedAndBonusGranted?.Invoke(provider, bonus);
+                    Debug.Log($"[AccountLinking] {provider} linked! Bonus: +{bonus:N0} coins");
+                }
+
+                SaveStatuses();
+            }
+            else
+            {
+                Debug.LogWarning($"[AccountLinking] Link failed for {provider}: {req.error}");
+                OnLinkFailed?.Invoke(provider);
+            }
         }
-        else
-        {
-            Debug.LogWarning($"[AccountLinking] Link failed for {provider}: {req.error}");
-            OnLinkFailed?.Invoke(provider);
         }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    public static long BonusForProvider(LinkProvider provider) => provider switch
+    public static long BonusForProvider(LinkProvider provider)
     {
-        LinkProvider.Facebook => BonusFacebookCoins,
-        LinkProvider.Google   => BonusGoogleCoins,
-        LinkProvider.Phone    => BonusPhoneCoins,
-        LinkProvider.Discord  => BonusDiscordCoins,
-        _                     => 0L
-    };
+        switch (provider)
+        {
+            case LinkProvider.Facebook: return BonusFacebookCoins;
+            case LinkProvider.Google: return BonusGoogleCoins;
+            case LinkProvider.Phone: return BonusPhoneCoins;
+            case LinkProvider.Discord: return BonusDiscordCoins;
+            default: return 0L;
+        }
+    }
 
-    public static string BonusLabel(LinkProvider provider) => provider switch
+    public static string BonusLabel(LinkProvider provider)
     {
-        LinkProvider.Discord => "5T Coins",
-        _                    => "2.5T Coins"
-    };
+        switch (provider)
+        {
+            case LinkProvider.Discord: return "5T Coins";
+            default: return "2.5T Coins";
+        }
+    }
 
     // ── Persistence ───────────────────────────────────────────────────────────
 

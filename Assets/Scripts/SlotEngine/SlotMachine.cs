@@ -24,7 +24,15 @@ public class SlotMachine : MonoBehaviour
         // Spin reels
         Symbol[] results = new Symbol[reels.Length];
         for (int i = 0; i < reels.Length; i++)
+        {
             results[i] = reels[i].Spin();
+            if (results[i] == null)
+            {
+                Debug.LogWarning($"[SlotMachine] Reel {i} returned null — aborting spin.");
+                PlayerEconomy.Instance.AddCoins(betAmount); // refund
+                return;
+            }
+        }
 
         // Evaluate 5-tier jackpot (also contributes bet to all pools internally)
         var (winTier, jackpotPrize) = ProgressiveJackpot.Instance != null
@@ -84,7 +92,7 @@ public class SlotMachine : MonoBehaviour
         // Only scale winning spins — losing spins already contribute to edge.
         // We use RTP as an expected-value weight: a payout of X has rtp chance
         // of actually paying out and (1-rtp) chance of returning 0 on that spin.
-        if (best > 0 && UnityEngine.Random.value > rtp)
+        if (best > 0 && SecureRandom.Value() > rtp)
             return 0;
 
         return best;

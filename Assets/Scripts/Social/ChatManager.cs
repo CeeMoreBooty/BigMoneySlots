@@ -29,12 +29,13 @@ public class ChatManager : MonoBehaviour
 
     public const int MaxHistoryPerChannel = 100;
 
-    private Dictionary<ChatChannel, List<ChatMessage>> _history = new()
-    {
-        { ChatChannel.Global,  new List<ChatMessage>() },
-        { ChatChannel.Room,    new List<ChatMessage>() },
-        { ChatChannel.Friends, new List<ChatMessage>() },
-    };
+    private Dictionary<ChatChannel, List<ChatMessage>> _history =
+        new Dictionary<ChatChannel, List<ChatMessage>>()
+        {
+            { ChatChannel.Global,  new List<ChatMessage>() },
+            { ChatChannel.Room,    new List<ChatMessage>() },
+            { ChatChannel.Friends, new List<ChatMessage>() },
+        };
 
     // Active DM target (playerId)
     public string ActiveDMTarget { get; private set; }
@@ -73,15 +74,18 @@ public class ChatManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(text)) return;
         text = SanitizeText(text);
 
+        string rawName   = PlayerPrefs.GetString("player_name", "Guardian");
+        string clampedName = rawName.Length > 24 ? rawName.Substring(0, 24) : rawName;
+
         var msg = new ChatMessage
         {
             senderId   = PlayerPrefs.GetString("player_id", "local"),
-            senderName = PlayerPrefs.GetString("player_name", "Guardian"),
+            senderName = clampedName,
             text       = text,
             channel    = channel.ToString().ToLower(),
             roomId     = roomId,
             targetId   = targetId ?? ActiveDMTarget,
-            timestamp  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            timestamp  = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds,
         };
 
         // TODO: emit via socket.io: socket.Emit("chat_message", JsonUtility.ToJson(msg));
@@ -92,20 +96,39 @@ public class ChatManager : MonoBehaviour
 
     public void SetDMTarget(string playerId) => ActiveDMTarget = playerId;
 
-    public List<ChatMessage> GetHistory(ChatChannel channel) =>
-        _history.TryGetValue(channel, out var list) ? list : new List<ChatMessage>();
+    public List<ChatMessage> GetHistory(ChatChannel channel)
+    {
+        List<ChatMessage> list;
+        return _history.TryGetValue(channel, out list) ? list : new List<ChatMessage>();
+    }
 
     // ── Called by socket.io callback when a message arrives from server ───────
     public void OnSocketMessageReceived(string json)
     {
-        var msg = JsonUtility.FromJson<ChatMessage>(json);
-        if (msg == null) return;
-        ChatChannel channel = msg.channel switch
+        ChatMessage msg;
+        try
         {
-            "room"    => ChatChannel.Room,
-            "friends" => ChatChannel.Friends,
-            _         => ChatChannel.Global,
-        };
+            msg = JsonUtility.FromJson<ChatMessage>(json);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[ChatManager] Failed to parse socket message: {ex.Message}");
+            return;
+        }
+        if (msg == null) return;
+        ChatChannel channel = ChatChannel.Global;
+        switch (msg.channel)
+        {
+            case "room":
+                channel = ChatChannel.Room;
+                break;
+            case "friends":
+                channel = ChatChannel.Friends;
+                break;
+            default:
+                channel = ChatChannel.Global;
+                break;
+        }
         AddToHistory(channel, msg);
         OnMessageReceived?.Invoke(channel, msg);
     }
@@ -115,28 +138,76 @@ public class ChatManager : MonoBehaviour
     {
         string url  = $"{BackendClient.BaseUrl}/api/chat/send";
         string body = JsonUtility.ToJson(msg);
-        using var req = new UnityWebRequest(url, "POST");
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
-        if (req.result != UnityWebRequest.Result.Success)
-            Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
+                Debug.LogWarning($"[ChatManager] Send failed: {req.error}");
+        }
     }
 
     private IEnumerator LoadRecentHistory(ChatChannel channel)
     {
         string url = $"{BackendClient.BaseUrl}/api/chat/history?channel={channel.ToString().ToLower()}&limit=50";
-        using var req = UnityWebRequest.Get(url);
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
-        yield return req.SendWebRequest();
-        if (req.result == UnityWebRequest.Result.Success)
+        using (var req = UnityWebRequest.Get(url))
         {
-            // Parse array — simplified; use a wrapper class for production
-            Debug.Log($"[ChatManager] History loaded for {channel}");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            yield return req.SendWebRequest();
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                // Parse array — simplified; use a wrapper class for production
+                Debug.Log($"[ChatManager] History loaded for {channel}");
+            }
         }
     }
+
+    /// <summary>
+    /// Fetches the full DM conversation with <paramref name="friendId"/> from the backend
+    /// and merges it into the Friends channel history. Call this when opening a DM thread.
+    /// </summary>
+    public void LoadDMThread(string friendId) =>
+        StartCoroutine(FetchDMThread(friendId));
+
+    private IEnumerator FetchDMThread(string friendId)
+    {
+        string url = $"{BackendClient.BaseUrl}/api/chat/dm/thread/{friendId}?limit=100";
+        using var req = UnityWebRequest.Get(url);
+        req.timeout = 10;
+        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[ChatManager] LoadDMThread failed: {req.error}");
+            yield break;
+        }
+
+        var wrapper = JsonUtility.FromJson<ChatMessageListWrapper>(req.downloadHandler.text);
+        if (wrapper?.messages == null) yield break;
+
+        // Merge into Friends history (avoid duplicates by timestamp)
+        var existing = _history[ChatChannel.Friends];
+        var existingTs = new System.Collections.Generic.HashSet<long>();
+        foreach (var m in existing) existingTs.Add(m.timestamp);
+
+        foreach (var m in wrapper.messages)
+        {
+            if (!existingTs.Contains(m.timestamp))
+                existing.Add(m);
+        }
+        // Re-sort chronologically
+        existing.Sort((a, b) => a.timestamp.CompareTo(b.timestamp));
+        // Trim to cap
+        while (existing.Count > MaxHistoryPerChannel) existing.RemoveAt(0);
+
+        OnMessageReceived?.Invoke(ChatChannel.Friends, null); // null signals a full refresh
+    }
+
+    [Serializable] private class ChatMessageListWrapper { public List<ChatMessage> messages; }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void AddToHistory(ChatChannel channel, ChatMessage msg)
@@ -144,12 +215,13 @@ public class ChatManager : MonoBehaviour
         var list = _history[channel];
         list.Add(msg);
         if (list.Count > MaxHistoryPerChannel) list.RemoveAt(0);
+        OnMessageReceived?.Invoke(channel, msg);
     }
 
     private static string SanitizeText(string text)
     {
         // Strip HTML tags and trim; profanity filter can be added here
-        text = System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", "");
-        return text.Trim().Substring(0, Math.Min(text.Trim().Length, 200));
+        text = System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", "").Trim();
+        return text.Substring(0, Math.Min(text.Length, 200));
     }
 }

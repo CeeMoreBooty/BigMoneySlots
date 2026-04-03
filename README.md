@@ -1,188 +1,122 @@
-# BigMoneySlots 🎰
+# BigMoneySlots — Network Storage Server
 
-A feature-rich Unity slot machine game with Node.js backend, featuring progressive jackpots, daily challenges, social features, and monetization systems.
+A lightweight Node.js REST API server that persists BigMoneySlots player data (coins, progress, daily challenges, etc.) to a local JSON file.
 
-## 🚀 Automatic Deployment
+## Requirements
 
-This repository is configured with GitHub Actions for automatic deployment:
+- Node.js >= 18
 
-### Backend Deployment
-- **Workflow**: `.github/workflows/deploy-backend.yml`
-- **Triggers**: Pushes to `Main` branch affecting `Backend/**` files
-- **Supported Platforms**:
-  - **Heroku** (recommended for quick setup)
-  - **Railway** (modern, easy to use)
-  - **Render** (free tier available)
-  - Any Node.js hosting service
+## Setup
 
-#### Quick Backend Deploy Options:
-
-**Option 1: Heroku**
-1. Create a Heroku account at https://heroku.com
-2. Create a new app: `heroku create bigmoneyslots-api`
-3. Add secrets to GitHub repository:
-   - `HEROKU_API_KEY` - Your Heroku API key
-   - `HEROKU_EMAIL` - Your Heroku email
-4. Uncomment Heroku section in `.github/workflows/deploy-backend.yml`
-5. Push to Main branch - automatic deployment!
-
-**Option 2: Railway** (⭐ Recommended - Easiest!)
-1. Sign up at https://railway.app
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select `BigMoneySlots` repository → `railway-deployment` branch
-4. Add MongoDB plugin (one click)
-5. Configure environment variables
-6. Deploy automatically!
-
-📖 **[Complete Railway Setup Guide](RAILWAY_DEPLOYMENT.md)** - Step-by-step instructions
-
-**Option 3: Render**
-1. Sign up at https://render.com
-2. Create a new Web Service
-3. Connect this repository
-4. Set root directory to `Backend`
-5. Use `npm install && node server.js` as start command
-
-### Unity Build Deployment
-- **Workflow**: `.github/workflows/unity-build.yml`
-- **Triggers**: Pushes to `Main` affecting Unity files
-- **Builds**: Android APK/AAB
-- **Optional**: Auto-upload to Google Play Internal Track
-
-#### Unity Build Setup:
-1. Add Unity license secrets to GitHub:
-   - `UNITY_LICENSE` - Your Unity license file content
-   - `UNITY_EMAIL` - Unity account email
-   - `UNITY_PASSWORD` - Unity account password
-2. Push changes - builds will be created automatically
-3. Download artifacts from GitHub Actions
-
-## 📦 Project Structure
-
-```
-BigMoneySlots/
-├── Assets/Scripts/          # Unity C# scripts
-│   ├── Backend/            # Backend API client
-│   ├── Core/               # Game core systems
-│   ├── Rewards/            # Daily challenges, loyalty, gems
-│   ├── SlotEngine/         # Slot machine mechanics
-│   ├── Social/             # Friends, chat, voice
-│   ├── UI/                 # User interface
-│   └── WelcomeOffer/       # IAP and welcome offers
-├── Backend/                # Node.js Express server
-│   ├── config/            # Database configuration
-│   ├── middleware/        # Auth, security, logging
-│   ├── models/            # MongoDB models
-│   ├── routes/            # API endpoints
-│   ├── services/          # Payment, security services
-│   └── server.js          # Entry point
-├── Docs/                  # Documentation
-└── GooglePlay/            # Android deployment checklists
-```
-
-## 🛠️ Local Development
-
-### Backend Setup
 ```bash
-cd Backend
 npm install
-cp .env.example .env
-# Edit .env with your configuration
-npm start
 ```
 
-### Unity Setup
-1. Open project in Unity 2021.3 or later
-2. Update `BackendClient.cs` with your backend URL
-3. Import required packages:
-   - TextMeshPro
-   - Unity IAP (optional)
-   - Socket.IO client (for real-time chat)
+## Running the server
 
-## 🔧 Configuration
-
-### Backend Environment Variables
-Create `Backend/.env`:
-```env
-PORT=3000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-STRIPE_SECRET_KEY=your_stripe_key
-PAYPAL_CLIENT_ID=your_paypal_id
+```bash
+npm start          # production
+npm run dev        # development (auto-restarts on file changes, Node 18+)
 ```
 
-### Unity Configuration
-Update in `Assets/Scripts/Backend/BackendClient.cs`:
-```csharp
-public const string BaseUrl = "https://your-deployed-backend.com";
+The server listens on port **3000** by default. Set the `PORT` environment variable to change it.
+
+```bash
+PORT=8080 npm start
 ```
 
-## ✨ Features
+## API Reference
 
-### Game Features
-- 🎰 **Slot Machine Engine** - Customizable reels, symbols, and payouts
-- 💎 **Progressive Jackpots** - 5-tier jackpot system
-- 🎯 **Daily Challenges** - 3 rotating challenges per day
-- ⭐ **Loyalty System** - Player tiers with bonuses
-- 💰 **Economy System** - Coins, gems, multipliers
-- 🎁 **Welcome Offers** - First-time purchase incentives
+### Health check
 
-### Social Features
-- 👥 **Friends System** - Add, manage, send gifts
-- 💬 **Text Chat** - Global, room, and private messaging
-- 🎤 **Voice Chat** - Vivox integration ready
-- 🔗 **Account Linking** - Cross-platform play
+```
+GET /health
+```
 
-### Monetization
-- 💳 **IAP System** - Unity IAP integration
-- 💵 **Payment Gateways** - Stripe, PayPal, Google Play
-- 🎟️ **Virtual Currencies** - Coins and gems
-- 🏆 **Tournaments** - Competitive play with entry fees
-
-### Backend Services
-- 🔐 **Authentication** - JWT-based auth
-- 🛡️ **Security** - Rate limiting, IP logging, ban system
-- 📊 **Analytics** - Transaction and security event tracking
-- 🎮 **Tournament Scheduler** - Automated tournament management
-
-## 🚢 Deployment Checklist
-
-- [x] All compiler issues fixed
-- [x] GitHub Actions workflows configured
-- [ ] Choose and configure hosting service (Heroku/Railway/Render)
-- [ ] Set up MongoDB database (MongoDB Atlas recommended)
-- [ ] Configure environment variables
-- [ ] Set up payment gateways (Stripe/PayPal)
-- [ ] Configure Unity build settings for Android
-- [ ] Test backend API endpoints
-- [ ] Build and test Unity app
-- [ ] Submit to Google Play (optional)
-
-## 📚 Documentation
-
-- [System Overview](Docs/SystemOverview.md)
-- [Payment System](Docs/PaymentSystem.md)
-- [Security System](Docs/SecuritySystem.md)
-- [Account Linking](Docs/AccountLinking.md)
-- [Android Build Guide](GooglePlay/BuildSettings/AndroidBuildChecklist.md)
-- [Google Play Console Guide](GooglePlay/GooglePlayConsoleChecklist.md)
-
-## 🔒 Security Notes
-
-- Never commit `.env` files or secrets to the repository
-- Use GitHub Secrets for all sensitive credentials
-- Enable 2FA on all service accounts
-- Regular security audits recommended
-- Rate limiting is configured by default
-
-## 📄 License
-
-See [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-This is a private project. For issues or questions, contact the repository owner.
+Response:
+```json
+{ "status": "ok", "time": "2026-03-23T00:00:00.000Z" }
+```
 
 ---
 
-**Ready to deploy?** Choose a hosting option above and push to the `Main` branch to trigger automatic deployment!
+### List all players
+
+```
+GET /players
+```
+
+---
+
+### Get a player
+
+```
+GET /players/:id
+```
+
+Returns `404` if the player does not exist.
+
+---
+
+### Create / replace a player
+
+```
+POST /players/:id
+Content-Type: application/json
+
+{
+  "coins": 1000,
+  "level": 1,
+  "dailyChallenges": {}
+}
+```
+
+Returns `201` with the saved record.
+
+---
+
+### Partially update a player
+
+```
+PATCH /players/:id
+Content-Type: application/json
+
+{ "coins": 5000 }
+```
+
+Merges the provided fields into the existing record. Returns `404` if the player does not exist.
+
+---
+
+### Push (upsert-merge) a player
+
+```
+PUT /players/:id
+Content-Type: application/json
+
+{ "coins": 9999 }
+```
+
+Creates the player record if it does not exist, or merges the supplied fields into the existing record if it does. Unspecified fields are preserved. Returns `200` with the saved record.
+
+---
+
+### Delete a player
+
+```
+DELETE /players/:id
+```
+
+Returns `204 No Content` on success, `404` if the player does not exist.
+
+---
+
+## Data storage
+
+Player records are stored in `data/players.json`. The file is created automatically on first run. The `data/` directory is excluded from version control.
+
+## Running tests
+
+```bash
+npm test
+```
