@@ -70,10 +70,7 @@ public class DeviceTracker : MonoBehaviour
         PlayerPrefs.SetString("device_id", DeviceId);
         PlayerPrefs.Save();
 
-        Debug.Log("[DeviceTracker] ID=" + DeviceId +
-                  " Platform=" + Platform +
-                  " OS=" + OperatingSystem +
-                  " Screen=" + ScreenRes);
+        Debug.Log($"[DeviceTracker] ID={DeviceId} Platform={Platform} OS={OperatingSystem} Screen={ScreenRes}");
     }
 
     // ── IP / Geo lookup ───────────────────────────────────────────────────────
@@ -102,7 +99,7 @@ public class DeviceTracker : MonoBehaviour
             System.Globalization.CultureInfo.InvariantCulture));
         PlayerPrefs.Save();
 
-        Debug.Log("[DeviceTracker] IP=" + IpAddress + " Country=" + Country);
+        Debug.Log($"[DeviceTracker] IP={IpAddress} Country={Country}");
 
         // Report to analytics using JsonUtility-style safe escaping
         string payload = JsonEscape(IpAddress, Country, Platform, OperatingSystem, DeviceModel, ScreenRes);

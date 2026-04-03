@@ -121,7 +121,7 @@ public class AnalyticsManager : MonoBehaviour
         });
 
         if (logEvents)
-            Debug.Log("[Analytics] " + eventName + ": " + jsonPayload);
+            Debug.Log($"[Analytics] {eventName}: {jsonPayload}");
     }
 
     /// <summary>

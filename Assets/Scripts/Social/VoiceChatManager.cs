@@ -83,7 +83,7 @@ public class VoiceChatManager : MonoBehaviour
         _pollCoroutine = StartCoroutine(PollAudioFromRoom());
 
         OnJoinedRoom?.Invoke(roomId);
-        Debug.Log("[VoiceChat] Joined voice room: " + roomId);
+        Debug.Log($"[VoiceChat] Joined voice room: {roomId}");
     }
 
     public void LeaveVoiceRoom()
@@ -105,7 +105,7 @@ public class VoiceChatManager : MonoBehaviour
         CurrentRoomId = null;
         IsInVoiceRoom = false;
         OnLeftRoom?.Invoke();
-        Debug.Log("[VoiceChat] Left voice room: " + left);
+        Debug.Log($"[VoiceChat] Left voice room: {left}");
     }
 
     // ── Mute / unmute ─────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ public class VoiceChatManager : MonoBehaviour
         if (muted) StopMicrophone();
         else       StartMicrophone();
         OnMuteChanged?.Invoke(IsMuted);
-        Debug.Log("[VoiceChat] Mute: " + IsMuted);
+        Debug.Log($"[VoiceChat] Mute: {IsMuted}");
     }
 
     public void ToggleMute() => SetMute(!IsMuted);
@@ -135,7 +135,7 @@ public class VoiceChatManager : MonoBehaviour
         _micClip     = Microphone.Start(_micDevice, true, clipSeconds, sampleRate);
         _isRecording = true;
         _lastSamplePos = 0;
-        Debug.Log("[VoiceChat] Microphone started: " + _micDevice);
+        Debug.Log($"[VoiceChat] Microphone started: {_micDevice}");
     }
 
     private void StopMicrophone()
@@ -280,8 +280,7 @@ public class VoiceChatManager : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.LogWarning("[VoiceChat] Failed to decode chunk from " + speakerId +
-                                 ": " + ex.Message);
+                Debug.LogWarning($"[VoiceChat] Failed to decode chunk from {speakerId}: {ex.Message}");
             }
         }
     }

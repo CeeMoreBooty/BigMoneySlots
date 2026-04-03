@@ -109,12 +109,12 @@ public class IAPHandler : MonoBehaviour
         var product = _storeController.products.WithID(productId);
         if (product != null && product.availableToPurchase)
         {
-            Debug.Log("[IAPHandler] Initiating purchase: " + productId);
+            Debug.Log($"[IAPHandler] Initiating purchase: {productId}");
             _storeController.InitiatePurchase(product);
         }
         else
         {
-            Debug.LogWarning("[IAPHandler] Product unavailable or not found: " + productId);
+            Debug.LogWarning($"[IAPHandler] Product unavailable or not found: {productId}");
         }
 #else
         Debug.LogWarning("[IAPHandler] Purchasing disabled — Unity Purchasing package missing.");
@@ -137,17 +137,17 @@ public class IAPHandler : MonoBehaviour
 
     // Unity IAP 4.x requires both overloads of OnInitializeFailed.
     public void OnInitializeFailed(InitializationFailureReason error)
-        => Debug.LogError("[IAPHandler] Initialization failed: " + error);
+        => Debug.LogError($"[IAPHandler] Initialization failed: {error}");
 
     public void OnInitializeFailed(InitializationFailureReason error, string message)
-        => Debug.LogError("[IAPHandler] Initialization failed: " + error + " — " + message);
+        => Debug.LogError($"[IAPHandler] Initialization failed: {error} — {message}");
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs args)
     {
         string productId = args.purchasedProduct.definition.id;
         string receipt   = args.purchasedProduct.receipt;
 
-        Debug.Log("[IAPHandler] Processing purchase: " + productId);
+        Debug.Log($"[IAPHandler] Processing purchase: {productId}");
 
         // Verify with the backend and confirm the transaction once we have a response.
         // Returning Pending keeps the transaction open until ConfirmPendingPurchase().
@@ -156,8 +156,7 @@ public class IAPHandler : MonoBehaviour
     }
 
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
-        => Debug.LogWarning("[IAPHandler] Purchase failed: " +
-                            product.definition.id + " — " + failureReason);
+        => Debug.LogWarning($"[IAPHandler] Purchase failed: {product.definition.id} — {failureReason}");
 #endif
 
     // ── Server-side receipt verification ─────────────────────────────────────
@@ -179,7 +178,7 @@ public class IAPHandler : MonoBehaviour
 
         if (req.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("[IAPHandler] Server verified purchase: " + productId);
+            Debug.Log($"[IAPHandler] Server verified purchase: {productId}");
             OnPurchaseCompleted(productId);
 
 #if UNITY_PURCHASING
@@ -193,8 +192,7 @@ public class IAPHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[IAPHandler] Server verification failed (" + productId + "): " +
-                           req.downloadHandler.text);
+            Debug.LogError($"[IAPHandler] Server verification failed ({productId}): {req.downloadHandler.text}");
             // Do NOT confirm — Unity will retry the pending purchase on the next session.
         }
     }
@@ -212,7 +210,7 @@ public class IAPHandler : MonoBehaviour
         {
             // Gem packs are granted server-side; show a confirmation toast.
             HUDManager.Instance?.ShowToast("Purchase successful! Gems added.", 4f);
-            Debug.Log("[IAPHandler] Gem pack purchased: " + productId);
+            Debug.Log($"[IAPHandler] Gem pack purchased: {productId}");
         }
         AnalyticsManager.Instance?.Track(AnalyticsManager.Event.IAPPurchase,
             "{\"productId\":\"" + productId + "\"}");
@@ -231,7 +229,7 @@ public class IAPHandler : MonoBehaviour
     private void SimulatePurchaseInEditor(string productId)
     {
 #if UNITY_EDITOR
-        Debug.Log("[IAPHandler] Simulating purchase in editor: " + productId);
+        Debug.Log($"[IAPHandler] Simulating purchase in editor: {productId}");
         OnPurchaseCompleted(productId);
 #endif
     }

@@ -127,8 +127,7 @@ public class LoyaltySystem : MonoBehaviour
             OnMilestoneReached?.Invoke(m.coins, m.freeSpins, m.superSpins);
             _nextMilestoneIndex++;
             PlayerPrefs.SetInt(KeyMilestoneIndex, _nextMilestoneIndex);
-            Debug.Log($"[LoyaltySystem] Milestone reached at {LifetimeSpins} spins! +" +
-                      $"{m.coins:N0} coins, +{m.freeSpins} free spins, +{m.superSpins} super spins");
+            Debug.Log($"[LoyaltySystem] Milestone reached at {LifetimeSpins} spins! +{m.coins:N0} coins, +{m.freeSpins} free spins, +{m.superSpins} super spins");
         }
     }
 

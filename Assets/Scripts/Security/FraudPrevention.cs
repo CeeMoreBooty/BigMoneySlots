@@ -144,7 +144,7 @@ public class FraudPrevention : MonoBehaviour
         if (_fraudFlagged) return;
         _fraudFlagged = true;
 
-        Debug.LogWarning("[FraudPrevention] Fraud flag: " + reason + " " + payload);
+        Debug.LogWarning($"[FraudPrevention] Fraud flag: {reason} {payload}");
         AnalyticsManager.Instance?.Track(AnalyticsManager.Event.FraudFlag,
             "{\"reason\":\"" + reason + "\",\"data\":" + payload + "}");
 

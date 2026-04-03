@@ -41,7 +41,7 @@ public class BootstrapLoader : MonoBehaviour
         if (DeviceTracker.Instance    == null) gameObject.AddComponent<DeviceTracker>();
         if (AnalyticsManager.Instance == null) gameObject.AddComponent<AnalyticsManager>();
 
-        Debug.Log("[Bootstrap] Loading scene " + nextSceneIndex + "...");
+        Debug.Log($"[Bootstrap] Loading scene {nextSceneIndex}...");
         SceneManager.LoadScene(nextSceneIndex);
     }
 }
