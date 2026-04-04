@@ -205,6 +205,7 @@ public class DailyChallenges : MonoBehaviour
         GemSystem.Instance?.AddGems(c.gemReward);
         c.rewardClaimed = true;
         Save();
+        Debug.Log($"[DailyChallenges] Claimed '{c.description}': +{c.coinReward} coins, +{c.gemReward} gems");
         return true;
     }
 

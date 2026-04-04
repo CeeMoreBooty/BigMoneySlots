@@ -82,6 +82,9 @@ public class SlotMachine : MonoBehaviour
 
     public long CurrentBet => _currentBet;
 
+    /// <summary>True while a spin coroutine is running.</summary>
+    public bool IsSpinning => _isSpinning;
+
     /// <summary>Core version has no free-spin mechanic; always returns false.</summary>
     public bool HasFreeSpins => false;
 

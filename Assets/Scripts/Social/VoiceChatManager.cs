@@ -95,6 +95,7 @@ public class VoiceChatManager : MonoBehaviour
 
         // TODO: pipe _micClip audio data through your chosen codec (Opus recommended)
         //       and send compressed frames to Vivox or your WebRTC peer connection.
+        OnSpeakerStarted?.Invoke(PlayerPrefs.GetString("player_id", "local"));
         Debug.Log($"[VoiceChat] Microphone started: {_micDevice}");
     }
 
@@ -103,6 +104,7 @@ public class VoiceChatManager : MonoBehaviour
         if (!_isRecording) return;
         Microphone.End(_micDevice);
         _isRecording = false;
+        OnSpeakerStopped?.Invoke(PlayerPrefs.GetString("player_id", "local"));
         Debug.Log("[VoiceChat] Microphone stopped.");
     }
 

@@ -74,7 +74,6 @@ public class LoyaltySystem : MonoBehaviour
     public LoyaltyTier   CurrentTier    { get; private set; }
     public float         WinMultiplier  => TierWinMultiplier[(int)CurrentTier];
 
-    private double _sessionStartTime;
     private double _lastSessionRewardTime;
     private int    _nextMilestoneIndex;
 
@@ -91,7 +90,6 @@ public class LoyaltySystem : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         Load();
         CheckComebackBonus();
-        _sessionStartTime      = GetUtcNow();
         _lastSessionRewardTime = GetUtcNow();
     }
 
