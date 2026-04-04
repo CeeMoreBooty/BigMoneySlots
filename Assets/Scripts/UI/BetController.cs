@@ -35,7 +35,7 @@ public class BetController : MonoBehaviour
         SoundManager.Instance?.PlayButtonClick();
         long step = slotConfig?.betStep ?? 100;
         long min  = slotConfig?.minBet  ?? 100;
-        currentBet = Mathf.Max((long)min, currentBet - step);
+        currentBet = System.Math.Max(min, currentBet - step);
         RefreshDisplay();
     }
 
@@ -44,7 +44,7 @@ public class BetController : MonoBehaviour
         SoundManager.Instance?.PlayButtonClick();
         long step = slotConfig?.betStep ?? 100;
         long max  = slotConfig?.maxBet  ?? 10000;
-        currentBet = Mathf.Min((long)max, currentBet + step);
+        currentBet = System.Math.Min(max, currentBet + step);
         RefreshDisplay();
     }
 
@@ -52,7 +52,7 @@ public class BetController : MonoBehaviour
     {
         SoundManager.Instance?.PlayButtonClick();
         long max  = slotConfig?.maxBet  ?? 10000;
-        currentBet = Mathf.Min((long)max, GameData.Coins);
+        currentBet = System.Math.Min(max, GameData.Coins);
         RefreshDisplay();
     }
 

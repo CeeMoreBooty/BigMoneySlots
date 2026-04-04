@@ -23,7 +23,7 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Popups / Systems")]
     [SerializeField] private LeaderboardController leaderboardController;
-    [SerializeField] private DailyChallenges       dailyChallenges;
+    [SerializeField] private DailyChallengesUI     dailyChallengesUI;
     [SerializeField] private DailyBonusController  dailyBonusController;
 
     [Header("Daily Bonus")]
@@ -122,7 +122,11 @@ public class MainMenuController : MonoBehaviour
     private void OnChallenges()
     {
         SoundManager.Instance?.PlayButtonClick();
-        dailyChallenges?.Show();
+        if (dailyChallengesUI != null)
+        {
+            dailyChallengesUI.gameObject.SetActive(true);
+            dailyChallengesUI.Refresh();
+        }
     }
 
     private void OnAchievements()

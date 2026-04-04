@@ -18,8 +18,7 @@ public class LeaderboardController : MonoBehaviour
         public long   coins;
     }
 
-    [System.Serializable]
-    public class LeaderboardRowUI
+    public class LeaderboardRowUI : MonoBehaviour
     {
         public TextMeshProUGUI rankText;
         public TextMeshProUGUI nameText;
