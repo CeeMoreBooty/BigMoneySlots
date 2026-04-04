@@ -112,7 +112,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: BootstrapControllerGUID000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 73bfd9868e184a5b954ca86a12a7a009, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   progressBar: {fileID: 0}
@@ -126,7 +126,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: UIManagerGUID00000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: df3f9e1b6ec541ca10a2c63ac0216529, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   fadeAnimator: {fileID: 0}
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: AchievementManagerGUID0000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: a66bd223f7af9d15d81c9c5552329791, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   toastPanel: {fileID: 0}
