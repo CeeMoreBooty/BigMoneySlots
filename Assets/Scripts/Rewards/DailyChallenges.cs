@@ -182,8 +182,8 @@ public class DailyChallenges : MonoBehaviour
     /// <summary>Record a spin (called by GameUIController.HandleSpinStart).</summary>
     public void OnSpin()           => RecordProgress(ChallengeType.SpinSlots, 1L);
 
-    /// <summary>Bet tracking — no challenge type maps to bet amount; no-op.</summary>
-    public void OnBet(long amount) { /* intentionally empty */ }
+    /// <summary>Bet tracking — no challenge type is defined for bet amount; this is a no-op by design.</summary>
+    public void OnBet(long amount) { /* intentionally empty: bet amount is not a tracked challenge metric */ }
 
     /// <summary>Record coin winnings (called by GameUIController.HandleWin).</summary>
     public void OnWin(long amount) => RecordProgress(ChallengeType.WinCoins, amount);
