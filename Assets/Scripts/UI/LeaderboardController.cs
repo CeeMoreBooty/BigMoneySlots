@@ -45,12 +45,12 @@ public class LeaderboardController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI    myRankText;
     [SerializeField] private TextMeshProUGUI    myCoinsText;
 
-    private BackendClient backend;
+    private BackendAPIClient backend;
     private string localPlayerName;
 
     private void Start()
     {
-        backend         = FindObjectOfType<BackendClient>() ?? gameObject.AddComponent<BackendClient>();
+        backend         = FindObjectOfType<BackendAPIClient>() ?? gameObject.AddComponent<BackendAPIClient>();
         localPlayerName = PlayerPrefs.GetString("PlayerName", "You");
 
         closeButton?.onClick.AddListener(Hide);

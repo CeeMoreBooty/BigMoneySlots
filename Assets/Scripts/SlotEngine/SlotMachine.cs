@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SlotMachine : MonoBehaviour
+public class SlotEngineSlotMachine : MonoBehaviour
 {
     [Header("Reels")]
     public Reel[] reels;

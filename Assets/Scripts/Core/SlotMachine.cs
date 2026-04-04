@@ -65,7 +65,31 @@ public class SlotMachine : MonoBehaviour
     /// <summary>Fires with simple (payout, isJackpot) payload (used by SlotUI).</summary>
     public event Action<long, bool> OnSpinComplete;
 
+    /// <summary>Fires when a spin begins (before the reel-stop delay).</summary>
+    public event Action OnSpinStart;
+
+    /// <summary>Fires after reel results are evaluated and all coins awarded.</summary>
+    public event Action OnSpinEnd;
+
+    /// <summary>Fires whenever a spin produces a non-zero payout.</summary>
+    public event Action<long> OnWin;
+
+    /// <summary>Fires when a jackpot-level win is detected (delegated from ProgressiveJackpot).</summary>
+    public event Action<long> OnJackpot;
+
+    /// <summary>Fires when free spins are awarded (stub – Core version does not model free spins).</summary>
+    public event Action OnFreeSpins;
+
     public long CurrentBet => _currentBet;
+
+    /// <summary>Core version has no free-spin mechanic; always returns false.</summary>
+    public bool HasFreeSpins => false;
+
+    /// <summary>Core version has no free-spin mechanic; always returns 0.</summary>
+    public int FreeSpinsLeft => 0;
+
+    /// <summary>Returns the current Mega jackpot pool from ProgressiveJackpot, or 0 if not present.</summary>
+    public long CurrentJackpot => ProgressiveJackpot.Instance?.CurrentJackpot ?? 0L;
 
     /// <summary>Field alias so Inspector-serialised <c>betAmount</c> values are honoured.</summary>
     public long betAmount
@@ -103,6 +127,19 @@ public class SlotMachine : MonoBehaviour
         _currentBet = minBet;
     }
 
+    /// <summary>
+    /// Convenience overload used by GameUIController.
+    /// Sets the bet, attempts to spend coins, and starts the spin.
+    /// Returns true if the spin was successfully started.
+    /// </summary>
+    public bool TrySpin(long bet)
+    {
+        if (_isSpinning) return false;
+        SetBet(bet);
+        Spin();
+        return _isSpinning; // true only if Spin() succeeded (coins were spent)
+    }
+
     public void Spin()
     {
         if (_isSpinning) return;
@@ -117,6 +154,7 @@ public class SlotMachine : MonoBehaviour
         if (!spent) return;
 
         _isSpinning = true;
+        OnSpinStart?.Invoke();
         StartCoroutine(SpinCoroutine());
     }
 
@@ -128,6 +166,7 @@ public class SlotMachine : MonoBehaviour
         long payout = CalculatePayout(_reelResult, _currentBet, out WinLevel winLevel);
 
         // Apply multipliers and award payout
+        bool isJackpot = false;
         if (payout > 0)
         {
             float mult = PlayerEconomy.Instance?.GetActiveMultiplier() ?? 1f;
@@ -139,13 +178,31 @@ public class SlotMachine : MonoBehaviour
                 PlayerEconomy.Instance.AddCoins(payout);
             else
                 GameManager.Instance?.userData?.AddCoins(payout);
+
+            // Check progressive jackpot
+            if (ProgressiveJackpot.Instance != null)
+            {
+                var (tier, jackpotPrize) = ProgressiveJackpot.Instance.EvaluateSpin(_currentBet);
+                if (tier.HasValue && jackpotPrize > 0)
+                {
+                    jackpotPrize = LoyaltySystem.Instance?.ApplyTierBonus(jackpotPrize) ?? jackpotPrize;
+                    if (PlayerEconomy.Instance != null)
+                        PlayerEconomy.Instance.AddCoins(jackpotPrize);
+                    payout += jackpotPrize;
+                    isJackpot = true;
+                    OnJackpot?.Invoke(jackpotPrize);
+                }
+            }
+
+            OnWin?.Invoke(payout);
         }
 
         LoyaltySystem.Instance?.RegisterSpin();
         _isSpinning = false;
 
         OnSpinFinished?.Invoke(_reelResult, payout, winLevel);
-        OnSpinComplete?.Invoke(payout, false);
+        OnSpinComplete?.Invoke(payout, isJackpot);
+        OnSpinEnd?.Invoke();
         GameManager.Instance?.OnSpinComplete(payout, winLevel);
     }
 

@@ -6,11 +6,11 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 /// <summary>
-/// REST API client for leaderboard and player sync.
+/// REST API client MonoBehaviour for leaderboard and player sync.
 /// Configure the base URL via the Inspector or PlayerPrefs.
 /// Supports both the local Node/Express backend and Railway deployment.
 /// </summary>
-public class BackendClient : MonoBehaviour
+public class BackendAPIClient : MonoBehaviour
 {
     [Header("API Configuration")]
     [SerializeField] private string baseUrl = "https://bigmoneyslots.up.railway.app/api";

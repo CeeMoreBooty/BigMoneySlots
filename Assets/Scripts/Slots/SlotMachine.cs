@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>
 /// Core slot machine logic: spin orchestration, payline evaluation, jackpot.
 /// </summary>
-public class SlotMachine : MonoBehaviour
+public class SlotsSlotMachine : MonoBehaviour
 {
     [Header("Config")]
     [SerializeField] private SlotConfig config;
