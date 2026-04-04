@@ -51,8 +51,9 @@ public class BetController : MonoBehaviour
     public void SetMaxBet()
     {
         SoundManager.Instance?.PlayButtonClick();
-        long max  = slotConfig?.maxBet  ?? 10000;
-        currentBet = System.Math.Min(max, GameData.Coins);
+        long max     = slotConfig?.maxBet  ?? 10000;
+        long balance = PlayerEconomy.Instance != null ? PlayerEconomy.Instance.Coins : GameData.Coins;
+        currentBet = System.Math.Min(max, balance);
         RefreshDisplay();
     }
 
@@ -60,6 +61,8 @@ public class BetController : MonoBehaviour
     {
         if (betAmountText != null)
             betAmountText.text = CoinDisplay.FormatCoins(currentBet);
+
+        long balance = PlayerEconomy.Instance != null ? PlayerEconomy.Instance.Coins : GameData.Coins;
 
         // Disable minus if already at minimum
         if (betMinusButton != null)
@@ -70,7 +73,7 @@ public class BetController : MonoBehaviour
         {
             long nextBet = currentBet + (slotConfig?.betStep ?? 100);
             betPlusButton.interactable = nextBet <= (slotConfig?.maxBet ?? 10000)
-                                      && nextBet <= GameData.Coins;
+                                      && nextBet <= balance;
         }
     }
 }

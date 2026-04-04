@@ -104,7 +104,13 @@ public class MainMenuController : MonoBehaviour
         if (!GameData.CanClaimDailyBonus) return;
 
         SoundManager.Instance?.PlayBonus();
-        GameData.AddCoins(dailyBonusAmount);
+        if (PlayerEconomy.Instance != null)
+            PlayerEconomy.Instance.AddCoins(dailyBonusAmount);
+        else
+        {
+            GameData.AddCoins(dailyBonusAmount);
+            GameData.Save();
+        }
         GameData.LastDailyBonusDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
         GameData.Save();
         RefreshUI();

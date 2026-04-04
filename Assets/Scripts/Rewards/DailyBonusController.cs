@@ -98,12 +98,18 @@ public class DailyBonusController : MonoBehaviour
         var reward = GetTodayReward();
         if (reward != null)
         {
-            GameData.AddCoins(reward.coinReward);
+            if (PlayerEconomy.Instance != null)
+                PlayerEconomy.Instance.AddCoins(reward.coinReward);
+            else
+            {
+                GameData.AddCoins(reward.coinReward);
+                GameData.Save();
+            }
             GameData.LastDailyBonusDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
             PlayerPrefs.SetInt(STREAK_KEY, currentStreak);
             PlayerPrefs.SetString(LAST_DAY_KEY, DateTime.UtcNow.ToString("yyyy-MM-dd"));
             GameData.Save();
-            coinDisplay?.AnimateTo(GameData.Coins);
+            coinDisplay?.AnimateTo(CoinDisplay.GetCoins());
         }
 
         HidePanel();

@@ -12,9 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: e561dfe475134f9e647920f012aba8b7
   - enabled: 1
-    path: Assets/Scenes/MainScene.unity
-    guid: ec81da24185144778a5a35ff7b9e6459
-  - enabled: 1
     path: Assets/Scenes/Game.unity
     guid: eb2008c68576b90340802c823a5c5806
   - enabled: 1
@@ -26,7 +23,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Paytable.unity
     guid: e9ae0ce974fbf39164db4fa16ac59834
-  - enabled: 1
-    path: Assets/Scenes/Main.unity
-    guid: 64da0f4d98ae48748a2b3d727c62df58
   m_configObjects: {}

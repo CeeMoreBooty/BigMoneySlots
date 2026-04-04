@@ -130,8 +130,11 @@ public class SlotMachineUI : MonoBehaviour
 
     private void RefreshCoinsLabel()
     {
-        if (coinsLabel && userData)
-            coinsLabel.text = $"💰 {FormatCoins(userData.Coins)}";
+        if (!coinsLabel) return;
+        long coins = PlayerEconomy.Instance != null
+            ? PlayerEconomy.Instance.Coins
+            : (userData != null ? userData.Coins : GameData.Coins);
+        coinsLabel.text = $"💰 {FormatCoins(coins)}";
     }
 
     private static string FormatCoins(long amount)

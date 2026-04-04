@@ -109,7 +109,7 @@ public class LeaderboardController : MonoBehaviour
 
         // My rank bar
         if (myRankText  != null) myRankText.text  = myRank > 0 ? $"Your Rank: #{myRank}" : "Unranked";
-        if (myCoinsText != null) myCoinsText.text = CoinDisplay.FormatCoins(GameData.Coins);
+        if (myCoinsText != null) myCoinsText.text = CoinDisplay.FormatCoins(CoinDisplay.GetCoins());
     }
 
     private void OnLeaderboardError(string error)
