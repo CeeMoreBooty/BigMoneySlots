@@ -111,7 +111,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: SlotMachineGUID00000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 50cbca0175b96eadc9a36fe51819ede5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   config: {fileID: 0}
@@ -126,7 +126,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: GameUIControllerGUID000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 74b93bf41b450fdd9fce72629a4dbaec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   slotMachine: {fileID: 100000002}
