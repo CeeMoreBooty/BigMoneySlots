@@ -1,41 +1,45 @@
 require('dotenv').config();
-const express  = require('express');
-const cors     = require('cors');
-const connectDB = require('./config/db');
+const http      = require('http');
+const jwt       = require('jsonwebtoken');
+const { Server } = require('socket.io');
+const connectDB  = require('./config/db');
+const createApp  = require('./app');
+const auth       = require('./middleware/auth');
 
-const authRoutes       = require('./routes/auth');
-const userRoutes       = require('./routes/user');
-const gameRoutes       = require('./routes/game');
-const challengeRoutes  = require('./routes/challenges');
-const leaderboardRoutes = require('./routes/leaderboard');
-
-const app  = express();
 const PORT = process.env.PORT || 3000;
-
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
-app.use(express.json());
 
 // ── Database ──────────────────────────────────────────────────────────────────
 connectDB();
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/api/auth',        authRoutes);
-app.use('/api/user',        userRoutes);
-app.use('/api/game',        gameRoutes);
-app.use('/api/challenges',  challengeRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-
-// ── Health check ──────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-
-// ── 404 handler ───────────────────────────────────────────────────────────────
-app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
-
-// ── Error handler ─────────────────────────────────────────────────────────────
-app.use((err, _req, res, _next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Internal server error' });
+// ── HTTP + Socket.IO ──────────────────────────────────────────────────────────
+const httpServer = http.createServer();
+const io = new Server(httpServer, {
+    cors: { origin: '*' },
 });
 
-app.listen(PORT, () => console.log(`BigMoneySlots API running on port ${PORT}`));
+// Authenticate socket connections and join the player's personal room
+io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('Missing token'));
+    try {
+        const payload = jwt.verify(token, auth.JWT_SECRET);
+        socket.playerId = payload.id;
+        next();
+    } catch {
+        next(new Error('Invalid token'));
+    }
+});
+
+io.on('connection', (socket) => {
+    socket.join(`player:${socket.playerId}`);
+    socket.on('join_room', (roomId) => socket.join(`room:${roomId}`));
+    socket.on('leave_room', (roomId) => socket.leave(`room:${roomId}`));
+});
+
+// ── Express app ───────────────────────────────────────────────────────────────
+const app = createApp({ io });
+httpServer.on('request', app);
+
+httpServer.listen(PORT, () =>
+    console.log(`BigMoneySlots API running on port ${PORT}`)
+);
