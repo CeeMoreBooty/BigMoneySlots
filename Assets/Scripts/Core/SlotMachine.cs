@@ -194,7 +194,7 @@ public class SlotMachine : MonoBehaviour
                     payout += jackpotPrize;
                     isJackpot = true;
                     OnJackpot?.Invoke(jackpotPrize);
-                    OnFreeSpins?.Invoke(); // jackpot grants a free-spin bonus round
+                    OnFreeSpins?.Invoke(); // signal UI that a jackpot bonus event occurred
                 }
             }
 
