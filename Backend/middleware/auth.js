@@ -48,11 +48,11 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// Attach named helpers so destructuring still works:
-//   const { signToken }   = require('../middleware/auth');
-//   const { verifyToken } = require('../middleware/auth');
+// Attach named helpers so both import styles continue to work without change:
+//   const auth            = require('../middleware/auth');  → Player middleware fn
+//   const { signToken }   = require('../middleware/auth');  → token creator
+//   const { verifyToken } = require('../middleware/auth');  → User middleware fn
 auth.signToken   = signToken;
 auth.verifyToken = verifyToken;
-auth.JWT_SECRET  = JWT_SECRET;
 
 module.exports = auth;

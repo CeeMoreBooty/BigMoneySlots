@@ -4,9 +4,9 @@ const jwt       = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const connectDB  = require('./config/db');
 const createApp  = require('./app');
-const auth       = require('./middleware/auth');
 
-const PORT = process.env.PORT || 3000;
+const PORT       = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme_use_env_var';
 
 // ── Database ──────────────────────────────────────────────────────────────────
 connectDB();
@@ -22,7 +22,7 @@ io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error('Missing token'));
     try {
-        const payload = jwt.verify(token, auth.JWT_SECRET);
+        const payload = jwt.verify(token, JWT_SECRET);
         socket.playerId = payload.id;
         next();
     } catch {
