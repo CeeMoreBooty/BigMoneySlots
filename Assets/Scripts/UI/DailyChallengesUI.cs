@@ -15,6 +15,7 @@ public class DailyChallengesUI : MonoBehaviour
     private void Start()
     {
         challenges = FindObjectOfType<DailyChallenges>();
+        if (challenges == null) return;
         Refresh();
     }
 

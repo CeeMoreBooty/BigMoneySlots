@@ -59,7 +59,7 @@ public class DailyChallenges : MonoBehaviour
 
     private const string DateKey = "DC_Date";
     private List<ChallengeTemplate> challengePool;
-    private System.Random rng = new System.Random();
+    private System.Random rng;
     private string dateKey;
 
     private void Awake()
@@ -205,6 +205,8 @@ public class DailyChallenges : MonoBehaviour
         dateKey = DateTime.UtcNow.ToString("yyyy-MM-dd");
         string saved = PlayerPrefs.GetString(DateKey, "");
 
+        SeedRngForDate(dateKey);
+
         if (saved == dateKey)
             Load();
         else
@@ -222,10 +224,21 @@ public class DailyChallenges : MonoBehaviour
         if (today == dateKey) return;
 
         dateKey = today;
+        SeedRngForDate(dateKey);
         GenerateNewChallenges();
         PlayerPrefs.SetString(DateKey, dateKey);
         PlayerPrefs.SetString("dc_games_today", "");
         Save();
+    }
+
+    /// <summary>Seeds the RNG deterministically from the date string so that
+    /// GenerateNewChallenges always produces the same challenge set for the same day.</summary>
+    private void SeedRngForDate(string date)
+    {
+        int seed = 0;
+        foreach (char ch in date)
+            seed = seed * 31 + ch;
+        rng = new System.Random(seed);
     }
 
     private void GenerateNewChallenges()
