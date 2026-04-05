@@ -24,7 +24,6 @@ const inviteRewardSchema = new mongoose.Schema({
     redemptions: { type: [redemptionSchema], default: [] },
 }, { timestamps: true });
 
-inviteRewardSchema.index({ inviteCode: 1 });
 inviteRewardSchema.index({ 'redemptions.redeemerId': 1 });
 
 module.exports = mongoose.model('InviteReward', inviteRewardSchema);

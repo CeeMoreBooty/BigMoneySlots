@@ -182,7 +182,7 @@ public class DailyChallenges : MonoBehaviour
 
     // ── Internal ──────────────────────────────────────────────────────────────
 
-    private void RecordProgress(ChallengeType type, long amount)
+    public void RecordProgress(ChallengeType type, long amount)
     {
         bool anyCompleted = false;
         foreach (var c in TodayChallenges)

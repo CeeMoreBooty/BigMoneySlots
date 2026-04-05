@@ -1,13 +1,35 @@
 const router  = require('express').Router();
 const User    = require('../models/User');
-const { signToken } = require('../middleware/auth');
+const Player  = require('../models/Player');
+const auth    = require('../middleware/auth');
+const { signToken } = auth;
 
-// POST /api/auth/register
+// ── Player-based registration (deviceId) ─────────────────────────────────────
+
+// POST /api/auth/register  — supports both { deviceId } and { username, password }
 router.post('/register', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { deviceId, displayName, username, password } = req.body;
+
+        // ── Device-based registration (Player model) ─────────────────
+        if (deviceId) {
+            let player = await Player.findOne({ deviceId });
+            if (player) {
+                const token = signToken(player._id);
+                return res.json({ token, isNew: false, playerId: player._id });
+            }
+            player = await Player.create({
+                deviceId,
+                displayName: displayName || 'Player',
+                coins: 10_000_000,
+            });
+            const token = signToken(player._id);
+            return res.status(201).json({ token, isNew: true, playerId: player._id });
+        }
+
+        // ── Username/password registration (User model) ──────────────
         if (!username || !password)
-            return res.status(400).json({ error: 'Username and password are required' });
+            return res.status(400).json({ error: 'deviceId or (username + password) is required' });
 
         const existing = await User.findOne({ username });
         if (existing)
@@ -21,7 +43,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// POST /api/auth/login
+// POST /api/auth/login  — username/password
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -37,6 +59,45 @@ router.post('/login', async (req, res) => {
 
         const token = signToken(user._id);
         res.json({ token, user: user.toPublicJSON() });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── Player profile endpoints ─────────────────────────────────────────────────
+
+// GET /api/auth/me  — returns authenticated player's profile
+router.get('/me', auth, async (req, res) => {
+    try {
+        res.json({
+            playerId:    req.player._id,
+            displayName: req.player.displayName,
+            coins:       req.player.coins,
+            gems:        req.player.gems || 0,
+            freeSpins:   req.player.freeSpins,
+            deviceId:    req.player.deviceId,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/auth/display-name  — update display name
+router.patch('/display-name', auth, async (req, res) => {
+    try {
+        let { displayName } = req.body;
+        if (!displayName || typeof displayName !== 'string')
+            return res.status(400).json({ error: 'displayName is required' });
+
+        displayName = displayName.trim();
+        if (displayName.length < 2)
+            return res.status(400).json({ error: 'Display name must be at least 2 characters' });
+        if (displayName.length > 24)
+            displayName = displayName.substring(0, 24);
+
+        req.player.displayName = displayName;
+        await req.player.save();
+        res.json({ displayName: req.player.displayName });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

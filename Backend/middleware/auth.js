@@ -1,11 +1,19 @@
-const jwt = require('jsonwebtoken');
+const jwt    = require('jsonwebtoken');
+const Player = require('../models/Player');
 
 const JWT_SECRET  = process.env.JWT_SECRET  || 'changeme_use_env_var';
-const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRES || '7d';
 
+/**
+ * Sign a JWT containing { id }.
+ */
 const signToken = (userId) =>
     jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
+/**
+ * Lightweight token verifier — sets req.user from the JWT payload.
+ * Used by User-model routes (game, leaderboard, user, challenges).
+ */
 const verifyToken = (req, res, next) => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer '))
@@ -20,4 +28,31 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-module.exports = { signToken, verifyToken };
+/**
+ * Player-loading auth middleware — verifies JWT then loads the full Player
+ * document from MongoDB and attaches it as req.player.
+ * Used by coins, chat, friends, payments, tournament, invite, accountLinking routes.
+ */
+const authenticatePlayer = async (req, res, next) => {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer '))
+        return res.status(401).json({ error: 'No token provided' });
+
+    const token = header.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const player  = await Player.findById(decoded.id);
+        if (!player) return res.status(401).json({ error: 'Player not found' });
+        req.player = player;
+        req.user   = decoded;   // keep for compatibility
+        next();
+    } catch {
+        res.status(401).json({ error: 'Invalid or expired token' });
+    }
+};
+
+// Default export = Player-loading middleware (used by: const auth = require('./auth'))
+// Named exports  = signToken, verifyToken
+module.exports              = authenticatePlayer;
+module.exports.signToken    = signToken;
+module.exports.verifyToken  = verifyToken;
