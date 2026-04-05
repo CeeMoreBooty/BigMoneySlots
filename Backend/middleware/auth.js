@@ -1,5 +1,6 @@
-const jwt    = require('jsonwebtoken');
-const Player = require('../models/Player');
+const jwt          = require('jsonwebtoken');
+const Player       = require('../models/Player');
+const BannedEntity = require('../models/BannedEntity');
 
 const JWT_SECRET  = process.env.JWT_SECRET  || 'changeme_use_env_var';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRES || '7d';
@@ -31,6 +32,7 @@ const verifyToken = (req, res, next) => {
 /**
  * Player-loading auth middleware — verifies JWT then loads the full Player
  * document from MongoDB and attaches it as req.player.
+ * Also checks if the player is banned.
  * Used by coins, chat, friends, payments, tournament, invite, accountLinking routes.
  */
 const authenticatePlayer = async (req, res, next) => {
@@ -43,6 +45,14 @@ const authenticatePlayer = async (req, res, next) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         const player  = await Player.findById(decoded.id);
         if (!player) return res.status(401).json({ error: 'Player not found' });
+
+        // Check if this player is banned
+        const ban = await BannedEntity.findOne({
+            type: 'player', value: String(player._id), active: true,
+            $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
+        });
+        if (ban) return res.status(403).json({ error: 'Account suspended' });
+
         req.player = player;
         req.user   = decoded;   // keep for compatibility
         next();

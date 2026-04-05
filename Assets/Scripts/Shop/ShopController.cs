@@ -1,13 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+#if UNITY_PURCHASING
 using UnityEngine.Purchasing;
 using UnityEngine.Purchasing.Extension;
+#endif
 
 /// <summary>
 /// Shop scene: displays coin packages, handles IAP and free coin grants.
 /// </summary>
-public class ShopController : MonoBehaviour, IDetailedStoreListener
+public class ShopController : MonoBehaviour
+#if UNITY_PURCHASING
+    , IDetailedStoreListener
+#endif
 {
     [System.Serializable]
     public class CoinPackage
@@ -37,9 +42,11 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
     [Header("Navigation")]
     [SerializeField] private Button closeButton;
 
+#if UNITY_PURCHASING
     private IStoreController   storeController;
     private IExtensionProvider extensions;
     private bool storeInitialized;
+#endif
 
     private void Start()
     {
@@ -49,10 +56,13 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
         closeButton?.onClick.AddListener(OnClose);
         watchAdButton?.onClick.AddListener(OnWatchAd);
 
+#if UNITY_PURCHASING
         InitIAP();
+#endif
         RefreshPackageUI();
     }
 
+#if UNITY_PURCHASING
     private void InitIAP()
     {
         var builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
@@ -61,6 +71,7 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
 
         UnityPurchasing.Initialize(this, builder);
     }
+#endif
 
     private void RefreshPackageUI()
     {
@@ -79,10 +90,14 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
     private void PurchasePackage(CoinPackage pkg)
     {
         SoundManager.Instance?.PlayButtonClick();
+#if UNITY_PURCHASING
         if (storeInitialized && storeController != null)
             storeController.InitiatePurchase(pkg.productId);
         else
             Debug.LogWarning($"Store not ready. Cannot purchase {pkg.productId}");
+#else
+        Debug.LogWarning($"Unity Purchasing not available. Cannot purchase {pkg.productId}");
+#endif
     }
 
     private void OnWatchAd()
@@ -108,6 +123,7 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
 
     // ── IDetailedStoreListener ───────────────────────────────────────────────
 
+#if UNITY_PURCHASING
     public void OnInitialized(IStoreController controller, IExtensionProvider ext)
     {
         storeController  = controller;
@@ -148,4 +164,5 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
 
     public void OnPurchaseFailed(Product product, PurchaseFailureDescription desc)
         => Debug.LogWarning($"Purchase failed: {product.definition.id} – {desc.message}");
+#endif
 }

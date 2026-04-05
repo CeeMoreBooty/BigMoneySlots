@@ -50,18 +50,22 @@ router.post('/join', auth, async (req, res) => {
  */
 router.post('/score', auth, async (req, res) => {
     try {
-        const { coinsWon = 0, biggestWin = 0 } = req.body;
+        const coinsWon  = Math.max(0, Math.min(50_000_000_000, Number(req.body.coinsWon)  || 0));
+        const biggestWin = Math.max(0, Math.min(50_000_000_000, Number(req.body.biggestWin) || 0));
+
         const t = await Tournament.findOne({ status: 'active' });
         if (!t) return res.status(404).json({ error: 'No active tournament' });
 
+        // Require player to have joined first (no upsert)
         const entry = await TournamentEntry.findOneAndUpdate(
             { tournamentId: t._id, playerId: req.player._id },
             {
                 $inc: { score: coinsWon, spinsPlayed: 1 },
                 $max: { biggestWin },
             },
-            { new: true, upsert: true }
+            { new: true }
         );
+        if (!entry) return res.status(400).json({ error: 'You must join the tournament first (POST /api/tournament/join)' });
         res.json({ entry });
     } catch (err) {
         res.status(500).json({ error: err.message });
