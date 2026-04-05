@@ -73,7 +73,7 @@ public class FriendsManager : MonoBehaviour
 
     private IEnumerator GetFriends()
     {
-        string url = $"{BackendClient.BaseUrl}/api/friends";
+        string url = $"{BackendConfig.BaseUrl}/api/friends";
         using (var req = UnityWebRequest.Get(url))
         {
             req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
@@ -94,7 +94,7 @@ public class FriendsManager : MonoBehaviour
 
     private IEnumerator PostFriendAction(string action, string targetPlayerId)
     {
-        string url  = $"{BackendClient.BaseUrl}/api/friends/{action}";
+        string url  = $"{BackendConfig.BaseUrl}/api/friends/{action}";
         string body = $"{{\"targetPlayerId\":\"{targetPlayerId}\"}}";
         using (var req = new UnityWebRequest(url, "POST"))
         {

@@ -67,7 +67,7 @@ public class SlotGameSceneController : MonoBehaviour
     // ── runtime ───────────────────────────────────────────────────────────
 
     private SlotGameDatabase.GameDefinition _def;
-    private SlotMachine _slotMachine;
+    private CoreSlotEngine _slotMachine;
     private bool        _autoSpinActive;
     private Coroutine   _autoSpinRoutine;
 
@@ -75,7 +75,7 @@ public class SlotGameSceneController : MonoBehaviour
     private static readonly float[] BetMultipliers = { 1f, 2f, 5f, 10f, 25f, 50f, 100f, 500f };
     private int _betLevel = 0;
 
-    // Reel symbol emoji per symbol index (matches SlotMachine.Symbol enum order)
+    // Reel symbol emoji per symbol index (matches CoreSlotEngine.Symbol enum order)
     private static readonly string[] SymbolEmoji =
         { "🍒","🍋","🍊","🍇","🔔","📊","7️⃣","💎","⭐","🃏","🐯","🐉","🌸","🦁","🔮" };
 
@@ -83,7 +83,7 @@ public class SlotGameSceneController : MonoBehaviour
 
     private void Awake()
     {
-        _slotMachine = FindObjectOfType<SlotMachine>();
+        _slotMachine = FindObjectOfType<CoreSlotEngine>();
     }
 
     private void Start()
@@ -145,8 +145,8 @@ public class SlotGameSceneController : MonoBehaviour
     }
 
     // Handles the event fired by SlotMachine (old API)
-    private void HandleSpinFinished(SlotMachine.Symbol[,] result,
-        long payout, SlotMachine.WinLevel winLevel)
+    private void HandleSpinFinished(CoreSlotEngine.Symbol[,] result,
+        long payout, CoreSlotEngine.WinLevel winLevel)
     {
         UpdateReelDisplay(result);
         RefreshCoins();
@@ -236,7 +236,7 @@ public class SlotGameSceneController : MonoBehaviour
 
     // ── display helpers ───────────────────────────────────────────────────
 
-    private void UpdateReelDisplay(SlotMachine.Symbol[,] result)
+    private void UpdateReelDisplay(CoreSlotEngine.Symbol[,] result)
     {
         TMP_Text[][] allReels =
         {
@@ -259,27 +259,27 @@ public class SlotGameSceneController : MonoBehaviour
         }
     }
 
-    private void ShowWinText(long payout, SlotMachine.WinLevel level)
+    private void ShowWinText(long payout, CoreSlotEngine.WinLevel level)
     {
         if (winLabel == null) return;
         winLabel.text = level switch
         {
-            SlotMachine.WinLevel.EpicWin => $"🎉 EPIC WIN!  +{FormatCoins(payout)}",
-            SlotMachine.WinLevel.MegaWin => $"🔥 MEGA WIN!  +{FormatCoins(payout)}",
-            SlotMachine.WinLevel.BigWin  => $"💥 BIG WIN!   +{FormatCoins(payout)}",
-            SlotMachine.WinLevel.Normal  => payout > 0 ? $"+{FormatCoins(payout)}" : "Try again!",
+            CoreSlotEngine.WinLevel.EpicWin => $"🎉 EPIC WIN!  +{FormatCoins(payout)}",
+            CoreSlotEngine.WinLevel.MegaWin => $"🔥 MEGA WIN!  +{FormatCoins(payout)}",
+            CoreSlotEngine.WinLevel.BigWin  => $"💥 BIG WIN!   +{FormatCoins(payout)}",
+            CoreSlotEngine.WinLevel.Normal  => payout > 0 ? $"+{FormatCoins(payout)}" : "Try again!",
             _                            => ""
         };
     }
 
-    private void TriggerWinCelebration(long payout, SlotMachine.WinLevel level)
+    private void TriggerWinCelebration(long payout, CoreSlotEngine.WinLevel level)
     {
         if (winCelebration == null || payout <= 0) return;
         switch (level)
         {
-            case SlotMachine.WinLevel.EpicWin: winCelebration.ShowEpicWin(payout); break;
-            case SlotMachine.WinLevel.MegaWin: winCelebration.ShowMegaWin(payout); break;
-            case SlotMachine.WinLevel.BigWin:  winCelebration.ShowBigWin(payout);  break;
+            case CoreSlotEngine.WinLevel.EpicWin: winCelebration.ShowEpicWin(payout); break;
+            case CoreSlotEngine.WinLevel.MegaWin: winCelebration.ShowMegaWin(payout); break;
+            case CoreSlotEngine.WinLevel.BigWin:  winCelebration.ShowBigWin(payout);  break;
         }
     }
 

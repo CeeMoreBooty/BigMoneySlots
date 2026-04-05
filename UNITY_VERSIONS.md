@@ -4,11 +4,12 @@ This document lists all Unity versions compatible with BigMoneySlots, their supp
 
 ---
 
-## Primary Target Version
+## Supported Versions
 
 | Unity Version | Release | Support Level |
 |---|---|---|
-| **Unity 6.4 (6000.4.0f1)** | 2025 | ✅ **PRIMARY — Fully Supported** |
+| **Unity 6 (6000.x)** | 2025 | ✅ **Fully Supported** |
+| **Unity 2021.3.45f2** | 2024 LTS | ✅ **Fully Supported** |
 
 ---
 
@@ -16,14 +17,14 @@ This document lists all Unity versions compatible with BigMoneySlots, their supp
 
 | Unity Version | Status | Notes |
 |---|---|---|
-| **6.4 (6000.4.0f1)** | ✅ Primary Target | Full support — all features tested here |
+| **6.4 (6000.4.0f1)** | ✅ Supported | Full support — all features tested |
 | **6.3 (6000.3.x)** | ✅ Compatible | Functionally identical to 6.4 for this project |
 | **6.2 (6000.2.x)** | ✅ Compatible | All features supported |
 | **6.1 (6000.1.x)** | ✅ Compatible | All features supported |
 | **6.0 (6000.0.x)** | ✅ Minimum Unity 6 | Unity 6 baseline — all APIs available |
-| **2022.3 LTS** | ⚠️ With Adjustments | C# 9 features may need downgrade; see notes |
-| **2021.3 LTS** | ❌ Not Supported | Missing APIs used in this project |
-| **< 2021** | ❌ Not Supported | Do not use |
+| **2021.3.45f2** | ✅ Supported | LTS — all scripts compile clean |
+| **2022.3 LTS** | ✅ Compatible | C# 9 features supported; see notes |
+| **< 2021.2** | ❌ Not Supported | Missing C# 9 support |
 
 ---
 
@@ -34,16 +35,17 @@ BigMoneySlots scripts use **C# 9** features. The following table shows the C# ve
 | Unity Version | C# Version | Compatibility |
 |---|---|---|
 | Unity 6.x (6000.x) | C# 9 | ✅ Full support |
-| Unity 2022.3 LTS | C# 9 (via .NET Standard 2.1) | ✅ Supported |
-| Unity 2021.3 LTS | C# 8 | ❌ Breaking changes |
+| Unity 2022.3 LTS | C# 9 | ✅ Supported |
+| Unity 2021.3 LTS (2021.2+) | C# 9 | ✅ Supported |
+| Unity 2021.1 and earlier | C# 8 | ❌ Breaking changes |
 
 ### C# Features Used in This Project
 
 - `using var` declarations (C# 8+)
-- Records / init-only properties (C# 9)
-- Target-typed `new` expressions (C# 9)
-- Nullable reference types (C# 8+)
-- Pattern matching enhancements (C# 9)
+- Switch expressions (C# 8+)
+- Value tuples (C# 7+)
+- String interpolation (C# 6+)
+- Null-conditional operators (C# 6+)
 
 ---
 
@@ -72,54 +74,39 @@ The following packages must be installed via **Window → Package Manager**:
 
 ## Version-Specific Considerations
 
-### Unity 6.x (Fully Supported)
+### Unity 6.x
 
 - Uses `.NET Standard 2.1` or `.NET Framework 4.x` — either works
 - IL2CPP scripting backend fully supported for Android
 - ARM64 target architecture fully supported
 - `UnityWebRequest` API unchanged from 2022.x
-- Socket.IO via `NativeWebSocket` or WebGL-compatible WebSocket
 
-### Unity 2022.3 LTS (With Adjustments)
+### Unity 2021.3.45f2
 
-If using Unity 2022.3 instead of Unity 6, the following adjustments may be needed:
+- C# 9 supported (Unity 2021.2+ includes Roslyn with C# 9)
+- TextMeshPro: Use version 3.0.6 — do NOT use TMP 4.x
+- Android SDK: Use API Level 31+ as target
+- Project Settings → Player → Api Compatibility Level: `.NET Standard 2.1`
+- IL2CPP scripting backend supported for Android ARM64
 
-1. **C# `using var` in IEnumerators**: Unity 2022.3 with Roslyn C# 9 supports this, but if you encounter errors, convert to explicit `using() { }` blocks:
-   ```csharp
-   // Before (C# 8+ syntax)
-   using var req = UnityWebRequest.Get(url);
-   
-   // After (compatible with all versions)
-   using (var req = UnityWebRequest.Get(url))
-   {
-       yield return req.SendWebRequest();
-   }
-   ```
+### Unity 2022.3 LTS
 
-2. **TextMeshPro**: Use version 3.0.6 — do NOT use TMP 4.x which ships with Unity 6.
-
-3. **Android SDK**: Use API Level 31 as target (33 is fine in 2022.3 too).
-
-4. **Project Settings → Player → Api Compatibility Level**: Set to `.NET Standard 2.1`.
-
-### Unity 6.0 Minimum (6000.0.x)
-
-- Unity 6.0 is the absolute minimum for Unity 6-series
-- All scripts compile without modification
-- Some UI layout improvements in 6.1+ may differ slightly
+- C# 9 fully supported
+- TextMeshPro: Use version 3.0.6 — do NOT use TMP 4.x
+- Android SDK: Use API Level 31–33 as target
 
 ---
 
 ## ProjectSettings/ProjectVersion.txt
 
-The project is configured for the primary target version:
+The project ships with:
 
 ```
-m_EditorVersion: 6000.4.0f1
-m_EditorVersionWithRevision: 6000.4.0f1 (a1b2c3d4e5f6)
+m_EditorVersion: 2021.3.45f2
+m_EditorVersionWithRevision: 2021.3.45f2 (0da89fac8e79)
 ```
 
-> **Note:** You can open the project in any compatible Unity version listed above. Unity will automatically upgrade the project version when you save. Do NOT downgrade below Unity 6000.0.x.
+> **Note:** You can open the project in any compatible Unity version listed above. Unity will automatically upgrade the project version when you save.
 
 ---
 
@@ -135,8 +122,9 @@ m_EditorVersionWithRevision: 6000.4.0f1 (a1b2c3d4e5f6)
 
 ## Recommended Development Setup
 
-For the best experience, use the exact primary target version:
+For the best experience, use one of the two primary target versions:
 
+### Option A: Unity 6
 1. Open **Unity Hub → Installs → Install Editor**
 2. Search for **6000.4.0f1** (or the closest available 6.x release)
 3. Enable the following modules:
@@ -144,6 +132,14 @@ For the best experience, use the exact primary target version:
    - ✅ Android SDK & NDK Tools
    - ✅ OpenJDK
 
+### Option B: Unity 2021.3.45f2
+1. Open **Unity Hub → Installs → Install Editor**
+2. Search for **2021.3.45f2**
+3. Enable the following modules:
+   - ✅ Android Build Support
+   - ✅ Android SDK & NDK Tools
+   - ✅ OpenJDK
+
 ---
 
-*Last updated: March 28, 2026*
+*Last updated: April 5, 2026*

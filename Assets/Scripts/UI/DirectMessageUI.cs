@@ -64,7 +64,7 @@ public class DirectMessageUI : MonoBehaviour
     private string _openFriendName;
 
     // Cache: friendId → last-received message preview
-    private readonly Dictionary<string, string> _previews = new();
+    private readonly Dictionary<string, string> _previews = new Dictionary<string, string>();
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     private void Awake()

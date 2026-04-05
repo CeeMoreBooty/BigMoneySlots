@@ -18,7 +18,7 @@ public class SlotUI : MonoBehaviour
     public Button spinButton;
 
     [Header("References")]
-    public SlotMachine slotMachine;
+    public ReelSlotMachine slotMachine;
 
     private long   _lastCoins     = long.MinValue;
     private long   _lastBet       = long.MinValue;

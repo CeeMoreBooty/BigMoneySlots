@@ -74,18 +74,10 @@ public class AccountLinking : MonoBehaviour
 
     private IEnumerator SendLinkToBackend(LinkProvider provider, string token)
     {
-        string url  = $"{BackendClient.BaseUrl}/api/account/link";
+        string url  = $"{BackendConfig.BaseUrl}/api/account/link";
         string body = $"{{\"provider\":\"{provider.ToString().ToLower()}\",\"token\":\"{token}\"}}";
 
         using (var req = new UnityWebRequest(url, "POST"))
-        {
-        req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type",  "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("auth_token", "")}");
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
         {
             req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
             req.downloadHandler = new DownloadHandlerBuffer();
@@ -116,7 +108,6 @@ public class AccountLinking : MonoBehaviour
                 Debug.LogWarning($"[AccountLinking] Link failed for {provider}: {req.error}");
                 OnLinkFailed?.Invoke(provider);
             }
-        }
         }
     }
 

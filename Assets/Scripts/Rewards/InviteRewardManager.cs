@@ -71,10 +71,10 @@ public class InviteRewardManager : MonoBehaviour
 
     private IEnumerator GetCode()
     {
-        string url = $"{BackendClient.BaseUrl}/api/invite/code";
+        string url = $"{BackendConfig.BaseUrl}/api/invite/code";
         using (var req = UnityWebRequest.Get(url))
         {
-            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendConfig.AuthToken}");
             yield return req.SendWebRequest();
 
             if (req.result == UnityWebRequest.Result.Success)
@@ -96,14 +96,14 @@ public class InviteRewardManager : MonoBehaviour
 
     private IEnumerator PostRedeem(string code)
     {
-        string url  = $"{BackendClient.BaseUrl}/api/invite/redeem";
+        string url  = $"{BackendConfig.BaseUrl}/api/invite/redeem";
         string body = $"{{\"code\":\"{code}\"}}";
         using (var req = new UnityWebRequest(url, "POST"))
         {
             req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type",  "application/json");
-            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendConfig.AuthToken}");
             yield return req.SendWebRequest();
 
             if (req.result == UnityWebRequest.Result.Success)

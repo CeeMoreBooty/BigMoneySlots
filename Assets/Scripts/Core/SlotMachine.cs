@@ -9,7 +9,7 @@ using UnityEngine;
 /// Economy: uses <see cref="PlayerEconomy"/> singleton when available,
 /// falling back to <see cref="GameManager.userData"/> for legacy support.
 /// </summary>
-public class SlotMachine : MonoBehaviour
+public class CoreSlotEngine : MonoBehaviour
 {
     public enum Symbol
     {

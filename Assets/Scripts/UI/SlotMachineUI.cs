@@ -21,7 +21,7 @@ public class SlotMachineUI : MonoBehaviour
     [SerializeField] private TMP_Text coinsLabel;
     [SerializeField] private TMP_Text winLabel;
 
-    private SlotMachine slotMachine;
+    private CoreSlotEngine slotMachine;
     private UserData    userData;
 
     private static readonly string[] SymbolEmoji =
@@ -31,7 +31,7 @@ public class SlotMachineUI : MonoBehaviour
 
     private void Awake()
     {
-        slotMachine = FindObjectOfType<SlotMachine>();
+        slotMachine = FindObjectOfType<CoreSlotEngine>();
         userData    = FindObjectOfType<UserData>();
     }
 
@@ -80,8 +80,8 @@ public class SlotMachineUI : MonoBehaviour
         RefreshBetLabel();
     }
 
-    private void HandleSpinFinished(SlotMachine.Symbol[,] result,
-        long payout, SlotMachine.WinLevel winLevel)
+    private void HandleSpinFinished(CoreSlotEngine.Symbol[,] result,
+        long payout, CoreSlotEngine.WinLevel winLevel)
     {
         UpdateReelDisplay(result);
         RefreshCoinsLabel();
@@ -90,16 +90,16 @@ public class SlotMachineUI : MonoBehaviour
         {
             winLabel.text = winLevel switch
             {
-                SlotMachine.WinLevel.EpicWin => $"🎉 EPIC WIN! +{FormatCoins(payout)}",
-                SlotMachine.WinLevel.MegaWin => $"🔥 MEGA WIN! +{FormatCoins(payout)}",
-                SlotMachine.WinLevel.BigWin  => $"💥 BIG WIN! +{FormatCoins(payout)}",
-                SlotMachine.WinLevel.Normal  => $"+{FormatCoins(payout)}",
+                CoreSlotEngine.WinLevel.EpicWin => $"🎉 EPIC WIN! +{FormatCoins(payout)}",
+                CoreSlotEngine.WinLevel.MegaWin => $"🔥 MEGA WIN! +{FormatCoins(payout)}",
+                CoreSlotEngine.WinLevel.BigWin  => $"💥 BIG WIN! +{FormatCoins(payout)}",
+                CoreSlotEngine.WinLevel.Normal  => $"+{FormatCoins(payout)}",
                 _                            => ""
             };
         }
     }
 
-    private void UpdateReelDisplay(SlotMachine.Symbol[,] result)
+    private void UpdateReelDisplay(CoreSlotEngine.Symbol[,] result)
     {
         if (reelTexts == null) return;
         int reelCount = result.GetLength(0);

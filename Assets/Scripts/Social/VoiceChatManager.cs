@@ -115,28 +115,28 @@ public class VoiceChatManager : MonoBehaviour
     // ── Backend signalling ─────────────────────────────────────────────────────
     private IEnumerator SignalJoinToBackend(string roomId)
     {
-        string url  = $"{BackendClient.BaseUrl}/api/chat/voice/join";
+        string url  = $"{BackendConfig.BaseUrl}/api/chat/voice/join";
         string body = $"{{\"roomId\":\"{roomId}\"}}";
         using (var req = new UnityWebRequest(url, "POST"))
         {
         req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        req.SetRequestHeader("Authorization", $"Bearer {BackendConfig.AuthToken}");
         yield return req.SendWebRequest();
         }
     }
 
     private IEnumerator SignalLeaveToBackend(string roomId)
     {
-        string url  = $"{BackendClient.BaseUrl}/api/chat/voice/leave";
+        string url  = $"{BackendConfig.BaseUrl}/api/chat/voice/leave";
         string body = $"{{\"roomId\":\"{roomId}\"}}";
         using (var req = new UnityWebRequest(url, "POST"))
         {
         req.uploadHandler   = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
         req.downloadHandler = new DownloadHandlerBuffer();
         req.SetRequestHeader("Content-Type", "application/json");
-        req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+        req.SetRequestHeader("Authorization", $"Bearer {BackendConfig.AuthToken}");
         yield return req.SendWebRequest();
         }
     }

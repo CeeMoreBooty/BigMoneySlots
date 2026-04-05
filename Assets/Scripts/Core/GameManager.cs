@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("References (all optional — set in Inspector)")]
-    public SlotMachine slotMachine;
+    public CoreSlotEngine slotMachine;
     public DailyChallenges dailyChallenges;
     public DailyBonus dailyBonus;
     public UserData userData;
@@ -33,7 +33,7 @@ public class GameManager : MonoBehaviour
         if (dailyBonus != null) dailyBonus.CheckAndAward();
     }
 
-    public void OnSpinComplete(long coinsWon, SlotMachine.WinLevel winLevel)
+    public void OnSpinComplete(long coinsWon, CoreSlotEngine.WinLevel winLevel)
     {
         if (userData != null)
         {
@@ -48,13 +48,13 @@ public class GameManager : MonoBehaviour
 
             switch (winLevel)
             {
-                case SlotMachine.WinLevel.BigWin:
+                case CoreSlotEngine.WinLevel.BigWin:
                     dailyChallenges.RecordProgress(DailyChallenges.ChallengeType.WinBigWin, 1L);
                     break;
-                case SlotMachine.WinLevel.MegaWin:
+                case CoreSlotEngine.WinLevel.MegaWin:
                     dailyChallenges.RecordProgress(DailyChallenges.ChallengeType.WinMegaWin, 1L);
                     break;
-                case SlotMachine.WinLevel.EpicWin:
+                case CoreSlotEngine.WinLevel.EpicWin:
                     dailyChallenges.RecordProgress(DailyChallenges.ChallengeType.WinEpicWin, 1L);
                     break;
             }

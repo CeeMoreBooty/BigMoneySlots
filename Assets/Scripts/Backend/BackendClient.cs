@@ -2,7 +2,7 @@
 /// Shared backend base URL used by all Unity REST clients.
 /// Change BaseUrl to your deployed server address before building.
 /// </summary>
-public static class BackendClient
+public static class BackendConfig
 {
 #if UNITY_EDITOR
     public const string BaseUrl = "http://localhost:3000";

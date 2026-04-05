@@ -114,10 +114,10 @@ public class FriendsUI : MonoBehaviour
 
     private System.Collections.IEnumerator SearchPlayers(string query)
     {
-        string url = $"{BackendClient.BaseUrl}/api/friends/search?q={UnityEngine.Networking.UnityWebRequest.EscapeURL(query)}";
+        string url = $"{BackendConfig.BaseUrl}/api/friends/search?q={UnityEngine.Networking.UnityWebRequest.EscapeURL(query)}";
         using (var req = UnityEngine.Networking.UnityWebRequest.Get(url))
         {
-            req.SetRequestHeader("Authorization", $"Bearer {BackendClient.AuthToken}");
+            req.SetRequestHeader("Authorization", $"Bearer {BackendConfig.AuthToken}");
             yield return req.SendWebRequest();
 
             if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)

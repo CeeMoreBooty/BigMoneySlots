@@ -145,8 +145,7 @@ public class GameUIController : MonoBehaviour
     private void HandleSpinStart()
     {
         SetSpinButtonEnabled(false);
-        dailyChallenges?.OnSpin();
-        dailyChallenges?.OnBet(betController?.CurrentBet ?? 500L);
+        dailyChallenges?.RecordSpin();
         AchievementManager.Instance?.CheckSpins();
     }
 
@@ -160,11 +159,9 @@ public class GameUIController : MonoBehaviour
 
     private void HandleWin(long amount)
     {
-        winPopup?.ShowWin(amount, betController?.CurrentBet ?? 500L);
-        dailyChallenges?.OnWin(amount);
-
         long bet = betController?.CurrentBet ?? 500L;
-        if (amount >= bet * 10) dailyChallenges?.OnBigWin();
+        winPopup?.ShowWin(amount, bet);
+        dailyChallenges?.RecordWin(amount, bet);
 
         AchievementManager.Instance?.CheckWins();
         AchievementManager.Instance?.CheckBigWin(amount);
@@ -174,7 +171,6 @@ public class GameUIController : MonoBehaviour
     private void HandleJackpot(long amount)
     {
         winPopup?.ShowJackpot(amount);
-        dailyChallenges?.OnJackpot();
         AchievementManager.Instance?.CheckJackpot();
     }
 
