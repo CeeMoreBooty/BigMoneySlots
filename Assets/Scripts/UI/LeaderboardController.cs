@@ -18,8 +18,7 @@ public class LeaderboardController : MonoBehaviour
         public long   coins;
     }
 
-    [System.Serializable]
-    public class LeaderboardRowUI
+    public class LeaderboardRowUI : MonoBehaviour
     {
         public TextMeshProUGUI rankText;
         public TextMeshProUGUI nameText;
@@ -45,12 +44,12 @@ public class LeaderboardController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI    myRankText;
     [SerializeField] private TextMeshProUGUI    myCoinsText;
 
-    private BackendClient backend;
+    private BackendAPIClient backend;
     private string localPlayerName;
 
     private void Start()
     {
-        backend         = FindObjectOfType<BackendClient>() ?? gameObject.AddComponent<BackendClient>();
+        backend         = FindObjectOfType<BackendAPIClient>() ?? gameObject.AddComponent<BackendAPIClient>();
         localPlayerName = PlayerPrefs.GetString("PlayerName", "You");
 
         closeButton?.onClick.AddListener(Hide);
@@ -110,7 +109,7 @@ public class LeaderboardController : MonoBehaviour
 
         // My rank bar
         if (myRankText  != null) myRankText.text  = myRank > 0 ? $"Your Rank: #{myRank}" : "Unranked";
-        if (myCoinsText != null) myCoinsText.text = CoinDisplay.FormatCoins(GameData.Coins);
+        if (myCoinsText != null) myCoinsText.text = CoinDisplay.FormatCoins(CoinDisplay.GetCoins());
     }
 
     private void OnLeaderboardError(string error)

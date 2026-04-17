@@ -3,7 +3,8 @@ using TMPro;
 using System.Collections;
 
 /// <summary>
-/// Animates the coin counter display and keeps it in sync with GameData.Coins.
+/// Animates the coin counter display and keeps it in sync with the active coin store.
+/// Reads from <see cref="PlayerEconomy"/> when available, falling back to <see cref="GameData"/>.
 /// </summary>
 public class CoinDisplay : MonoBehaviour
 {
@@ -18,7 +19,7 @@ public class CoinDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        displayedValue = GameData.Coins;
+        displayedValue = GetCoins();
         RefreshText(displayedValue);
     }
 
@@ -29,12 +30,19 @@ public class CoinDisplay : MonoBehaviour
         countCoroutine = StartCoroutine(CountUp(displayedValue, newAmount));
     }
 
-    /// <summary>Immediately set display to current GameData.Coins.</summary>
+    /// <summary>Immediately set display to the current player coin balance.</summary>
     public void Refresh()
     {
-        displayedValue = GameData.Coins;
+        displayedValue = GetCoins();
         RefreshText(displayedValue);
     }
+
+    /// <summary>
+    /// Returns the authoritative coin balance: <see cref="PlayerEconomy"/> when present,
+    /// otherwise <see cref="GameData"/> (legacy fallback).
+    /// </summary>
+    public static long GetCoins() =>
+        PlayerEconomy.Instance != null ? PlayerEconomy.Instance.Coins : GameData.Coins;
 
     private IEnumerator CountUp(long from, long to)
     {

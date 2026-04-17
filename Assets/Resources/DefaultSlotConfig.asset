@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: SlotConfigGUID000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: d31176e35778656cfbf1680d1d0c62a6, type: 3}
   m_Name: DefaultSlotConfig
   m_EditorClassIdentifier: 
   numReels: 5

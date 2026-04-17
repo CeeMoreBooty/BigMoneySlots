@@ -4,6 +4,7 @@ using TMPro;
 
 /// <summary>
 /// UI panel for displaying and claiming daily challenges.
+/// Reads challenge data from DailyChallenges.TodayChallenges list.
 /// </summary>
 public class DailyChallengesUI : MonoBehaviour
 {
@@ -25,10 +26,13 @@ public class DailyChallengesUI : MonoBehaviour
         foreach (Transform child in rowContainer)
             Destroy(child.gameObject);
 
-        for (int i = 0; i < challenges.ChallengeCount; i++)
+        var list = challenges.TodayChallenges;
+        for (int i = 0; i < list.Count; i++)
         {
             int index = i; // capture for lambda
-            var (current, target) = challenges.GetProgress(i);
+            var c = list[i];
+            long current   = c.progress;
+            long target    = c.target;
             bool claimable = challenges.IsClaimable(i);
 
             if (challengeRowPrefab == null) continue;
@@ -36,7 +40,7 @@ public class DailyChallengesUI : MonoBehaviour
             GameObject row = Instantiate(challengeRowPrefab, rowContainer);
 
             var desc = row.transform.Find("DescText")?.GetComponent<TMP_Text>();
-            if (desc) desc.text = challenges.GetDescription(i);
+            if (desc) desc.text = c.description;
 
             var prog = row.transform.Find("ProgressText")?.GetComponent<TMP_Text>();
             if (prog) prog.text = $"{current}/{target}";
@@ -55,13 +59,10 @@ public class DailyChallengesUI : MonoBehaviour
 
     private void OnClaim(int index)
     {
-        var (coins, gems) = challenges.ClaimChallenge(index);
-        if (coins > 0 || gems > 0)
-        {
-            var ud = GameManager.Instance?.userData;
-            ud?.AddCoins(coins);
-            if (gems > 0) ud?.AddGems(gems);
-            Refresh();
-        }
+        var list = challenges?.TodayChallenges;
+        if (list == null || index < 0 || index >= list.Count) return;
+
+        bool claimed = challenges.ClaimReward(list[index].id);
+        if (claimed) Refresh();
     }
 }

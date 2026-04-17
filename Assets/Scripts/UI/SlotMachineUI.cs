@@ -8,8 +8,15 @@ using TMPro;
 /// </summary>
 public class SlotMachineUI : MonoBehaviour
 {
-    [Header("Reels (assign Symbol Text arrays per reel)")]
-    [SerializeField] private TMP_Text[][] reelTexts; // [reel][row]
+    /// <summary>Serializable wrapper so Unity can show reel row arrays in the Inspector.</summary>
+    [System.Serializable]
+    public class ReelRow
+    {
+        public TMP_Text[] rows;
+    }
+
+    [Header("Reels (one ReelRow per reel column; assign row TMP_Text fields)")]
+    [SerializeField] private ReelRow[] reelTexts; // [reel][row]
 
     [Header("Buttons")]
     [SerializeField] private Button spinButton;
@@ -105,9 +112,14 @@ public class SlotMachineUI : MonoBehaviour
         int reelCount = result.GetLength(0);
         int rowCount  = result.GetLength(1);
         for (int r = 0; r < reelCount && r < reelTexts.Length; r++)
-            for (int row = 0; row < rowCount && reelTexts[r] != null && row < reelTexts[r].Length; row++)
-                if (reelTexts[r][row] != null)
-                    reelTexts[r][row].text = SymbolEmoji[(int)result[r, row]];
+        {
+            if (reelTexts[r]?.rows == null) continue;
+            for (int row = 0; row < rowCount && row < reelTexts[r].rows.Length; row++)
+            {
+                if (reelTexts[r].rows[row] != null)
+                    reelTexts[r].rows[row].text = SymbolEmoji[(int)result[r, row]];
+            }
+        }
     }
 
     private void RefreshBetLabel()
@@ -118,8 +130,11 @@ public class SlotMachineUI : MonoBehaviour
 
     private void RefreshCoinsLabel()
     {
-        if (coinsLabel && userData)
-            coinsLabel.text = $"💰 {FormatCoins(userData.Coins)}";
+        if (!coinsLabel) return;
+        long coins = PlayerEconomy.Instance != null
+            ? PlayerEconomy.Instance.Coins
+            : (userData != null ? userData.Coins : GameData.Coins);
+        coinsLabel.text = $"💰 {FormatCoins(coins)}";
     }
 
     private static string FormatCoins(long amount)

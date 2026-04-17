@@ -228,7 +228,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 300000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: PaytableControllerGUID000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: c278ffc893c29f9c8bfcd3603b8dd3f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   slotConfig: {fileID: 0}

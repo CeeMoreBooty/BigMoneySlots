@@ -162,7 +162,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: UIManagerGUID00000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: df3f9e1b6ec541ca10a2c63ac0216529, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   fadeAnimator: {fileID: 0}
@@ -175,7 +175,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: SoundManagerGUID0000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 111fb694c4fc22dea51cd2e17970ea4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   musicSource: {fileID: 0}
@@ -372,7 +372,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 300000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: MainMenuControllerGUID000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: 724ead2f4670a6750030e2f575d4c3f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   coinDisplay: {fileID: 0}
@@ -710,7 +710,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 340000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: CoinDisplayGUID000000000000000000, type: 3}
+  m_Script: {fileID: 11500000, guid: ea8a6bd45121c3196866b3dac96a00cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   coinText: {fileID: 0}

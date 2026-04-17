@@ -103,7 +103,7 @@ public class GameUIController : MonoBehaviour
         if (!slotMachine.TrySpin(bet))
         {
             SoundManager.Instance?.PlayError();
-            if (GameData.Coins < bet)
+            if (CoinDisplay.GetCoins() < bet)
                 ShowInsufficientFundsMessage();
         }
     }
@@ -153,7 +153,7 @@ public class GameUIController : MonoBehaviour
     private void HandleSpinEnd()
     {
         SetSpinButtonEnabled(true);
-        coinDisplay?.AnimateTo(GameData.Coins);
+        coinDisplay?.AnimateTo(CoinDisplay.GetCoins());
         RefreshJackpot();
         RefreshFreeSpins();
     }

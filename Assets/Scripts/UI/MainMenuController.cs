@@ -23,7 +23,7 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Popups / Systems")]
     [SerializeField] private LeaderboardController leaderboardController;
-    [SerializeField] private DailyChallenges       dailyChallenges;
+    [SerializeField] private DailyChallengesUI     dailyChallengesUI;
     [SerializeField] private DailyBonusController  dailyBonusController;
 
     [Header("Daily Bonus")]
@@ -104,7 +104,13 @@ public class MainMenuController : MonoBehaviour
         if (!GameData.CanClaimDailyBonus) return;
 
         SoundManager.Instance?.PlayBonus();
-        GameData.AddCoins(dailyBonusAmount);
+        if (PlayerEconomy.Instance != null)
+            PlayerEconomy.Instance.AddCoins(dailyBonusAmount);
+        else
+        {
+            GameData.AddCoins(dailyBonusAmount);
+            GameData.Save();
+        }
         GameData.LastDailyBonusDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
         GameData.Save();
         RefreshUI();
@@ -122,7 +128,11 @@ public class MainMenuController : MonoBehaviour
     private void OnChallenges()
     {
         SoundManager.Instance?.PlayButtonClick();
-        dailyChallenges?.Show();
+        if (dailyChallengesUI != null)
+        {
+            dailyChallengesUI.gameObject.SetActive(true);
+            dailyChallengesUI.Refresh();
+        }
     }
 
     private void OnAchievements()

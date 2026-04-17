@@ -57,8 +57,8 @@ public class SettingsController : MonoBehaviour
 
     private void LoadSettings()
     {
-        if (musicSlider != null) musicSlider.value = SoundManager.Instance?.MusicVolume ?? GameData.MusicEnabled ? 1f : 0f;
-        if (sfxSlider   != null) sfxSlider.value   = SoundManager.Instance?.SFXVolume   ?? GameData.SFXEnabled   ? 1f : 0f;
+        if (musicSlider != null) musicSlider.value = SoundManager.Instance?.MusicVolume ?? (GameData.MusicEnabled ? 1f : 0f);
+        if (sfxSlider   != null) sfxSlider.value   = SoundManager.Instance?.SFXVolume   ?? (GameData.SFXEnabled   ? 1f : 0f);
         if (musicToggle != null) musicToggle.isOn   = GameData.MusicEnabled;
         if (sfxToggle   != null) sfxToggle.isOn     = GameData.SFXEnabled;
         if (notificationsToggle != null) notificationsToggle.isOn = GameData.NotificationsEnabled;

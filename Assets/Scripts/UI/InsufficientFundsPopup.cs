@@ -27,7 +27,7 @@ public class InsufficientFundsPopup : MonoBehaviour
     /// <summary>Show the popup for a specific required amount.</summary>
     public void Show(long requiredAmount)
     {
-        if (balanceText  != null) balanceText.text  = $"Your coins: {CoinDisplay.FormatCoins(GameData.Coins)}";
+        if (balanceText  != null) balanceText.text  = $"Your coins: {CoinDisplay.FormatCoins(CoinDisplay.GetCoins())}";
         if (requiredText != null) requiredText.text  = $"Required: {CoinDisplay.FormatCoins(requiredAmount)}";
 
         bool canClaim = GameData.CanClaimDailyBonus;

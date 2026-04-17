@@ -94,9 +94,14 @@ public class ShopController : MonoBehaviour, IDetailedStoreListener
 
     private void GrantCoins(long amount)
     {
-        GameData.AddCoins(amount);
-        GameData.Save();
-        coinDisplay?.AnimateTo(GameData.Coins);
+        if (PlayerEconomy.Instance != null)
+            PlayerEconomy.Instance.AddCoins(amount);
+        else
+        {
+            GameData.AddCoins(amount);
+            GameData.Save();
+        }
+        coinDisplay?.AnimateTo(CoinDisplay.GetCoins());
         SoundManager.Instance?.PlayCoinDrop();
     }
 

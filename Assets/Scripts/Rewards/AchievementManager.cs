@@ -76,7 +76,7 @@ public class AchievementManager : MonoBehaviour
 
     public void CheckSpins()  => CheckCategory("Spins",   GameData.TotalSpins);
     public void CheckWins()   => CheckCategory("Wins",    GameData.TotalWins);
-    public void CheckCoins()  => CheckCategory("Coins",   GameData.Coins);
+    public void CheckCoins()  => CheckCategory("Coins",   CoinDisplay.GetCoins());
     public void CheckBigWin(long amount) => CheckCategory("BigWin", amount);
     public void CheckJackpot()           => CheckCategory("Jackpot", 1);
 
@@ -93,8 +93,13 @@ public class AchievementManager : MonoBehaviour
     private void TriggerUnlock(Achievement ach)
     {
         ach.Unlock();
-        GameData.AddCoins(ach.rewardCoins);
-        GameData.Save();
+        if (PlayerEconomy.Instance != null)
+            PlayerEconomy.Instance.AddCoins(ach.rewardCoins);
+        else
+        {
+            GameData.AddCoins(ach.rewardCoins);
+            GameData.Save();
+        }
         toastQueue.Enqueue(ach);
         if (!toastActive) StartCoroutine(ShowToastQueue());
     }
